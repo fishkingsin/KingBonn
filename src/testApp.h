@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+<<<<<<< HEAD
 //#include "ofxBonjour.h"
 #include "ofxOsc.h"
 //#include "ofxKinect.h"
@@ -11,6 +12,12 @@
 #include "ofxTween.h"
 #include "ofxControlPanel.h"
 //using namespace ofxBonjour;
+=======
+#include "ofxKinect.h"
+#include "ofxOsc.h"
+#include "ofxXmlSettings.h"
+#include "ofxDelaunay.h"
+>>>>>>> update project
 class testApp : public ofBaseApp{
     
 public:

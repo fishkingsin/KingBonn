@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ofxNetwork
 ofxOpenCv
 ofxOsc
@@ -14,3 +15,9 @@ ofxTimecode
 ofxTimeline
 ofxTrueTypeFontUC
 ofxUI
+=======
+ofxOsc
+ofxXmlSettings
+ofxDelaunay
+ofxKinect
+>>>>>>> update project
