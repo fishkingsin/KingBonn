@@ -14,8 +14,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-               BuildableName = "KingBonn.app"
-               BlueprintName = "KingBonn"
+               BuildableName = "emptyExample.app"
+               BlueprintName = "emptyExample"
                ReferencedContainer = "container:KingBonn.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -32,8 +32,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "KingBonn.app"
-            BlueprintName = "KingBonn"
+            BuildableName = "emptyExample.app"
+            BlueprintName = "emptyExample"
             ReferencedContainer = "container:KingBonn.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -44,14 +44,15 @@
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       buildConfiguration = "Release"
+      ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
       <BuildableProductRunnable>
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "KingBonn.app"
-            BlueprintName = "KingBonn"
+            BuildableName = "emptyExample.app"
+            BlueprintName = "emptyExample"
             ReferencedContainer = "container:KingBonn.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -68,8 +69,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E4B69B5A0A3A1756003C02F2"
-            BuildableName = "KingBonn.app"
-            BlueprintName = "KingBonn"
+            BuildableName = "emptyExample.app"
+            BlueprintName = "emptyExample"
             ReferencedContainer = "container:KingBonn.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
