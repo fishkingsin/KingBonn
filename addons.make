@@ -20,4 +20,9 @@ ofxOsc
 ofxXmlSettings
 ofxDelaunay
 ofxKinect
+<<<<<<< HEAD
 >>>>>>> update project
+=======
+ofxPostProcessing
+ofxUI
+>>>>>>> added shader, added camera orbit , added porintCloud
