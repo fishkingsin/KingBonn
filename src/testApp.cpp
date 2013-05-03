@@ -1,22 +1,7 @@
 #include "testApp.h"
-//--------------------------------------------------------------
-void testApp::exit() {
-//	kinect.setCameraTiltAngle(0); // zero the tilt on exit
-//	kinect.close();
-//	bonjourServer.startService( "_ecs._tcp.", "ecs", 7170 );
-}
+
 //--------------------------------------------------------------
 void testApp::setup(){
-<<<<<<< HEAD
-//    kinect.setRegistration(true);
-//    
-//	kinect.init();
-//	//kinect.init(true); // shows infrared instead of RGB video image
-//	//kinect.init(false, false); // disable video image (faster fps)
-//	kinect.open();
-//    angle = 0;
-//	kinect.setCameraTiltAngle(angle);
-=======
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -49,16 +34,11 @@ void testApp::setup(){
     
     // Setup light
 	light.setPosition(1000, 1000, 2000);
->>>>>>> added shader, added camera orbit , added porintCloud
+
 }
 
 //--------------------------------------------------------------
 void testApp::update(){
-<<<<<<< HEAD
-//    kinect.update();
-	
-	// there is a new frame and we are connected
-=======
     kinect.update();
 	
 	// there is a new frame and we are connected
@@ -79,40 +59,13 @@ void testApp::update(){
         }
     }
 //    cam.orbit(orbit.x, orbit.y, 1000);
->>>>>>> added shader, added camera orbit , added porintCloud
+
     
 }
 
 //--------------------------------------------------------------
 void testApp::draw(){
-<<<<<<< HEAD
-    drawPointCloud();
-}
-//--------------------------------------------------------------
-void testApp::drawPointCloud() {
-//    int w = 640;
-//    int h = 480;
-//    ofMesh mesh;
-//    mesh.setMode(OF_PRIMITIVE_POINTS);
-//    int step = 2;
-//    for(int y = 0; y < h; y += step) {
-//        for(int x = 0; x < w; x += step) {
-//            if(kinect.getDistanceAt(x, y) > 0) {
-//                mesh.addColor(kinect.getColorAt(x,y));
-//                mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-//            }
-//        }
-//    }
-//    glPointSize(3);
-//    ofPushMatrix();
-//    // the projected points are 'upside down' and 'backwards'
-//    ofScale(1, -1, -1);
-//    ofTranslate(0, 0, -1000); // center the points a bit
-//    glEnable(GL_DEPTH_TEST);
-//    mesh.drawVertices();
-//    glDisable(GL_DEPTH_TEST);
-//    ofPopMatrix();
-=======
+
     ofBackground(0);
     ofEnableAlphaBlending();
     ofEnableBlendMode(OF_BLENDMODE_ADD);
@@ -177,19 +130,14 @@ void testApp::drawPointCloud() {
     mesh.drawWireframe();
 	glDisable(GL_DEPTH_TEST);
 	ofPopMatrix();
->>>>>>> added shader, added camera orbit , added porintCloud
+
 }
-//--------------------------------------------------------------
-<<<<<<< HEAD
-void testApp::keyPressed(int key){
-    
-=======
 void testApp::exit() {
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
 	
 
->>>>>>> added shader, added camera orbit , added porintCloud
+
 }
 //--------------------------------------------------------------
 void testApp::keyPressed(int key){
