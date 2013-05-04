@@ -8,7 +8,7 @@
 #include "ofxDelaunay.h"
 #include "ofxUI.h"
 #include "ofxPostProcessing.h"
-
+#include "Canon.h"
 class testApp : public ofBaseApp{
     
 public:
@@ -38,5 +38,9 @@ public:
     
     ofLight light;
     ofVec3f orbit;
-
+    
+    
+    roxlu::Canon canon;
+    void onPictureTaken(roxlu::CanonPictureEvent& ev);
+    int timeTry;
 };

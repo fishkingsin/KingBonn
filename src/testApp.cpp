@@ -34,11 +34,26 @@ void testApp::setup(){
     
     // Setup light
 	light.setPosition(1000, 1000, 2000);
+    
+    orbit.set(0,0,0);
+    canon.start();
+	canon.addPictureTakenListener(this, &testApp::onPictureTaken);
+    timeTry = 0;
 
 }
-
+void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
+	cout << ev.getFilePath() << endl;
+}
 //--------------------------------------------------------------
 void testApp::update(){
+    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
+		canon.startLiveView();
+        timeTry++;
+        if(timeTry==5)
+        {
+            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
+        }
+	}
     kinect.update();
 	
 	// there is a new frame and we are connected
@@ -56,6 +71,7 @@ void testApp::update(){
 		if(m.getAddress() == "/orbit"){
             orbit.x = m.getArgAsInt32(0);
             orbit.y = m.getArgAsInt32(1);
+            orbit.z = m.getArgAsInt32(2);
         }
     }
 //    cam.orbit(orbit.x, orbit.y, 1000);
@@ -79,13 +95,25 @@ void testApp::draw(){
     
     // begin scene to post process
     post.begin(cam);
-    
-    drawPointCloud();
+    ofPushMatrix();
+	{
+		ofRotateX( orbit.x );
+		ofRotateY( orbit.y );
+		ofRotateZ( orbit.z );
+        drawPointCloud();
+    }
+	ofPopMatrix();
     // end scene and draw
     post.end();
     
     // set gl state back to original
     glPopAttrib();
+    
+    glDisable(GL_DEPTH_TEST);
+    if(!canon.isLiveViewActive())
+       {
+           canon.drawLiveView();
+       }
 }
 void testApp::drawPointCloud() {
 	int w = 640;
@@ -96,7 +124,7 @@ void testApp::drawPointCloud() {
 	int step = 2;
 	for(int y = 0; y < h; y += step) {
 		for(int x = 0; x < w; x += step) {
-			if(kinect.getDistanceAt(x, y) > 0 && kinect.getDistanceAt(x, y) < 2000)
+			if(kinect.getDistanceAt(x, y) > 0 && kinect.getDistanceAt(x, y) < 10000)
             {
 //                triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
 
