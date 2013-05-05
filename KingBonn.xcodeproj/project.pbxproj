@@ -1105,6 +1105,7 @@
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_7 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera";
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_8 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera/amd64";
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_9 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera/ia64";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-D__MACOSX_CORE__",
 					"-lpthread",
@@ -1114,7 +1115,7 @@
 					"$(OF_CORE_LIBS)",
 					"../../../addons/ofxKinect/libs/libusb/osx/libs/usb-1.0.a",
 				);
-				SDKROOT = "";
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -1207,6 +1208,7 @@
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_7 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera";
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_8 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera/amd64";
 				HEADER_SEARCH_PATHS_QUOTED_FOR_PROJECT_9 = "../../../addons/ofxKinect/libs/libusb/win/inf/xbox\\ nui\\ camera/ia64";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-D__MACOSX_CORE__",
 					"-lpthread",
@@ -1216,7 +1218,7 @@
 					"$(OF_CORE_LIBS)",
 					"../../../addons/ofxKinect/libs/libusb/osx/libs/usb-1.0.a",
 				);
-				SDKROOT = "";
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};

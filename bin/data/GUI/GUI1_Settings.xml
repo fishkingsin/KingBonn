@@ -1,0 +1,30 @@
+<Widget>
+    <Kind>2</Kind>
+    <Name>ENABLE_OSC</Name>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>MIN_RANGE</Name>
+    <Value>0.000000000</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>MAX_RANGE</Name>
+    <Value>4048.583007812</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>CAM_DISTANCE</Name>
+    <Value>1457.489868164</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>MESH_DISTANCE</Name>
+    <Value>283.401367188</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>BILLBOARD_NORM</Name>
+    <Value>9.716599464</Value>
+</Widget>

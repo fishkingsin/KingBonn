@@ -9,6 +9,7 @@
 #include "ofxUI.h"
 #include "ofxPostProcessing.h"
 #include "Canon.h"
+#define NUM_BILLBOARDS 640*480
 class testApp : public ofBaseApp{
     
 public:
@@ -32,15 +33,36 @@ public:
     ofxDelaunay triangulation;
     float angle;
     ofEasyCam cam;
+    ofMesh mesh;
     ofxOscReceiver receiver;
     ofxPostProcessing post;
     ofxUICanvas gui;
     
-    ofLight light;
+//    ofLight light;
     ofVec3f orbit;
     
     
     roxlu::Canon canon;
     void onPictureTaken(roxlu::CanonPictureEvent& ev);
     int timeTry;
+    enum MODE
+    {
+        POINT,
+        TRIANGLE,
+        BILLBOARD,
+        DISPLACEMENT,
+    };
+    MODE mode;
+    ofxUICanvas *gui1;
+    void setGUI1();
+    void guiEvent(ofxUIEventArgs &e);
+    float minRange,maxRange,camDistance,meshDistance,bbNormal;
+    bool bOsc;
+    
+    ofShader billboardShader;
+    ofImage texture;
+    ofDirectory dir;
+    int numEntry;
+
+
 };
