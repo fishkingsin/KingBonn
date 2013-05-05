@@ -11,20 +11,20 @@
 <Widget>
     <Kind>4</Kind>
     <Name>MAX_RANGE</Name>
-    <Value>4048.583007812</Value>
+    <Value>2024.291503906</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>CAM_DISTANCE</Name>
-    <Value>1457.489868164</Value>
+    <Value>1174.089111328</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>MESH_DISTANCE</Name>
-    <Value>283.401367188</Value>
+    <Value>-1578.947265625</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>BILLBOARD_NORM</Name>
-    <Value>9.716599464</Value>
+    <Value>60.728748322</Value>
 </Widget>

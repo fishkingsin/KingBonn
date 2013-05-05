@@ -2,14 +2,12 @@
 //--------------------------------------------------------------
 void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c) {
 	ofVec3f normal = ((b - a).cross(c - a)).normalize();
-//	mesh.addNormal(normal);
-//	mesh.addTexCoord(a);
-	mesh.addVertex(a);
-//	mesh.addNormal(normal);
-//	mesh.addTexCoord(b);
+        mesh.addVertex(a);
+	mesh.addNormal(normal);
+	mesh.addTexCoord(b);
 	mesh.addVertex(b);
-//	mesh.addNormal(normal);
-//	mesh.addTexCoord(c);
+	mesh.addNormal(normal);
+	mesh.addTexCoord(c);
 	mesh.addVertex(c);
 }
 
@@ -132,7 +130,7 @@ void testApp::draw(){
         
         // setup gl state
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
+//        glEnable(GL_CULL_FACE);
 //    light.enable();
 
         post.begin(cam);
@@ -246,14 +244,14 @@ void testApp::drawPointCloud() {
         ofPopMatrix();
     }else if (mode ==DISPLACEMENT)
     {
-        ofMesh mesh;
+        ofVboMesh mesh;
         
-//        mesh.setUsage( GL_DYNAMIC_DRAW );
+        mesh.setUsage( GL_DYNAMIC_DRAW );
         mesh.setMode(OF_PRIMITIVE_TRIANGLES);
         
         int step = 2;
-        for(int y = 0; y < h; y += step) {
-            for(int x = 0; x < w; x += step) {
+        for(int y = 0; y < h-step; y += step) {
+            for(int x = 0; x < w-step; x += step) {
                 float nwDis = kinect.getDistanceAt(x, y);
                 float neDis = kinect.getDistanceAt(x+step, y);
                 float swDis = kinect.getDistanceAt(x, y+step);
@@ -280,10 +278,11 @@ void testApp::drawPointCloud() {
         ofScale(1, -1, -1);
         
         ofTranslate(0, 0, meshDistance); // center the points a bit
-        
-//            mesh.drawFaces();
-        mesh.drawWireframe();
-        mesh.drawVertices();
+        kinect.getTextureReference().bind();
+        mesh.draw();
+        kinect.getTextureReference().unbind();
+//        mesh.drawWireframe();
+//        mesh.drawVertices();
         
         
         ofPopMatrix();
