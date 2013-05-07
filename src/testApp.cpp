@@ -2,7 +2,7 @@
 //--------------------------------------------------------------
 void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c) {
 	ofVec3f normal = ((b - a).cross(c - a)).normalize();
-        mesh.addVertex(a);
+    mesh.addVertex(a);
 	mesh.addNormal(normal);
 	mesh.addTexCoord(b);
 	mesh.addVertex(b);
@@ -49,7 +49,7 @@ void testApp::setup(){
     post.createPass<EdgePass>()->setEnabled(false);
     
     // Setup light
-//	light.setPosition(0, 0, 2000);
+    //	light.setPosition(0, 0, 2000);
     
     orbit.set(0,0,0);
     canon.start();
@@ -59,21 +59,40 @@ void testApp::setup(){
     mode = POINT;
     minRange = 0;
     maxRange = 10000;
-    setGUI1();  
+    setGUI1();
     
     
 	// load the bilboard shader
 	// this is used to change the
 	// size of the particle
 	billboardShader.load("Billboard");
-        dir.allowExt("png");
+    dir.allowExt("png");
 	numEntry = dir.listDir("images/");
-
+    
 	// we need to disable ARB textures in order to use normalized texcoords
 	ofDisableArbTex();
 	texture.loadImage(dir.getPath(0));
     ofEnableArbTex();
 	ofEnableAlphaBlending();
+    
+    particle.getVertices().resize(NUM_BILLBOARDS);
+	particle.getColors().resize(NUM_BILLBOARDS);
+	particle.getNormals().resize(NUM_BILLBOARDS,ofVec3f(0));
+	
+	// ------------------------- billboard particles
+	for (int i=0; i<NUM_BILLBOARDS; i++) {
+		
+		billboardVels[i].set(ofRandomf(), -1.0, ofRandomf());
+        particle.getVertices()[i].set(ofRandom(-500, 500),
+                                      ofRandom(-500, 500),
+                                      ofRandom(-500, 500));
+		
+		particle.getColors()[i].set(ofColor::fromHsb(ofRandom(96, 160), 0, 255));
+	    
+		
+	}
+    particle.setUsage( GL_DYNAMIC_DRAW );
+	particle.setMode(OF_PRIMITIVE_POINTS);
     
 }
 void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
@@ -81,21 +100,23 @@ void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
 }
 //--------------------------------------------------------------
 void testApp::update(){
-    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
-		canon.startLiveView();
-        timeTry++;
-        if(timeTry==5)
-        {
-            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
-        }
-	}
-    kinect.update();
-	
-	// there is a new frame and we are connected
-	if(kinect.isFrameNew())
+//    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
+//		canon.startLiveView();
+//        timeTry++;
+//        if(timeTry==5)
+//        {
+//            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
+//        }
+//	}
+    if(kinect.isConnected())
     {
+        kinect.update();
         
-    }
+        // there is a new frame and we are connected
+        if(kinect.isFrameNew())
+        {
+            
+        }}
     if(bOsc)
     {
         // check for waiting messages
@@ -103,7 +124,7 @@ void testApp::update(){
             // get the next message
             ofxOscMessage m;
             receiver.getNextMessage(&m);
-                
+            
             // check for mouse moved message
             if(m.getAddress() == "/orbit"){
                 orbit.x = m.getArgAsInt32(0);
@@ -113,7 +134,22 @@ void testApp::update(){
         }
         cam.orbit(-orbit.y, orbit.x, camDistance);
     }
-    
+    float t = (ofGetElapsedTimef()) * 0.9f;
+	float div = 250.0;
+	
+	for (int i=0; i<NUM_BILLBOARDS; i++) {
+		
+		// noise
+		ofVec3f vec(ofSignedNoise(t, particle.getVertex(i).y/div, particle.getVertex(i).z/div),
+                    ofSignedNoise(particle.getVertex(i).x/div, t, particle.getVertex(i).z/div),
+                    ofSignedNoise(particle.getVertex(i).x/div, particle.getVertex(i).y/div, t));
+		
+		vec *= 10 * ofGetLastFrameTime();
+		billboardVels[i] += vec;
+		particle.getVertices()[i] += billboardVels[i];
+		billboardVels[i] *= 0.94f;
+    	particle.setNormal(i,ofVec3f(10,0,0));
+	}
 }
 
 //--------------------------------------------------------------
@@ -122,39 +158,50 @@ void testApp::draw(){
     ofBackground(0);
     
     // copy enable part of gl state
-        
+    
     // begin scene to post process
-//    if(mode == POINT || mode == TRIANGLE)
-//    {
-        glPushAttrib(GL_ENABLE_BIT);
-        
-        // setup gl state
-        glEnable(GL_DEPTH_TEST);
-//        glEnable(GL_CULL_FACE);
-//    light.enable();
-
-        post.begin(cam);
-        
-//    }else if(BILLBOARD == mode)
-//    {
-//        cam.begin();
-//    }
-    drawPointCloud();
+    //    if(mode == POINT || mode == TRIANGLE)
+    //    {
+    glPushAttrib(GL_ENABLE_BIT);
+    
+    // setup gl state
+    glEnable(GL_DEPTH_TEST);
+    //        glEnable(GL_CULL_FACE);
+    //    light.enable();
+    
+    post.begin(cam);
+    
+    //    }else if(BILLBOARD == mode)
+    //    {
+    //        cam.begin();
+    //    }
+    if(kinect.isConnected())
+    {
+        drawPointCloud();
+    }
+	billboardShader.begin();
+	ofEnablePointSprites();
+	texture.getTextureReference().bind();
+	particle.draw();
+	texture.getTextureReference().unbind();
+	ofDisablePointSprites();
+    billboardShader.end();
+	
     
     // end scene and draw
-//    if(mode == POINT|| mode == TRIANGLE)
-//    {
-        post.end();
-        // set gl state back to original
-        glPopAttrib();
-        
-        glDisable(GL_DEPTH_TEST);
-
-//    }else if(BILLBOARD == mode)
-//    {
-//        cam.end();
-//    }
-        if(!canon.isLiveViewActive())
+    //    if(mode == POINT|| mode == TRIANGLE)
+    //    {
+    post.end();
+    // set gl state back to original
+    glPopAttrib();
+    
+    glDisable(GL_DEPTH_TEST);
+    
+    //    }else if(BILLBOARD == mode)
+    //    {
+    //        cam.end();
+    //    }
+    if(!canon.isLiveViewActive())
     {
         canon.drawLiveView();
     }
@@ -233,7 +280,7 @@ void testApp::drawPointCloud() {
             ofDisablePointSprites();
             
             billboardShader.end();
-
+            
         }
         else if (mode == POINT){
             glPointSize(5);
@@ -262,8 +309,8 @@ void testApp::drawPointCloud() {
                    swDis> minRange && swDis < maxRange &&
                    seDis> minRange && seDis < maxRange )
                 {
-//                    mesh.addColor(kinect.getColorAt(x,y));
-//                    mesh.addVertex();
+                    //                    mesh.addColor(kinect.getColorAt(x,y));
+                    //                    mesh.addVertex();
                     ofVec3f nw = kinect.getWorldCoordinateAt(x, y);//ofVec3f( x, y , 0);
                     ofVec3f ne = kinect.getWorldCoordinateAt(x+step, y);//ofVec3f( x + step, y, 0);
                     ofVec3f sw = kinect.getWorldCoordinateAt(x, y+step);//ofVec3f( x, y + step, 0);
@@ -281,14 +328,14 @@ void testApp::drawPointCloud() {
         kinect.getTextureReference().bind();
         mesh.draw();
         kinect.getTextureReference().unbind();
-//        mesh.drawWireframe();
-//        mesh.drawVertices();
+        //        mesh.drawWireframe();
+        //        mesh.drawVertices();
         
         
         ofPopMatrix();
-
-    }
         
+    }
+    
     
     
     
@@ -296,7 +343,8 @@ void testApp::drawPointCloud() {
     
 }
 void testApp::exit() {
-    
+    canon.endLiveView();
+
     gui1->saveSettings("GUI/GUI1_Settings.xml");
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
@@ -336,7 +384,7 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 void testApp::keyPressed(int key){
     switch(key)
     {
-            case ' ':
+        case ' ':
             
             
             
@@ -344,7 +392,7 @@ void testApp::keyPressed(int key){
             
             texture.loadImage(dir.getPath(int(ofRandom(numEntry))));
             ofEnableArbTex();
-
+            
             break;
         case 'p':
             mode = POINT;

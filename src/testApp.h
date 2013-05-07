@@ -9,7 +9,8 @@
 #include "ofxUI.h"
 #include "ofxPostProcessing.h"
 #include "Canon.h"
-#define NUM_BILLBOARDS 640*480
+#define NUM_BILLBOARDS 10000
+
 class testApp : public ofBaseApp{
     
 public:
@@ -63,6 +64,7 @@ public:
     ofImage texture;
     ofDirectory dir;
     int numEntry;
-
-
+    
+    ofVboMesh particle;
+    ofVec3f billboardVels[NUM_BILLBOARDS];
 };
