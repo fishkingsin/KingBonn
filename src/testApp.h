@@ -67,4 +67,5 @@ public:
     
     ofVboMesh particle;
     ofVec3f billboardVels[NUM_BILLBOARDS];
+    vector<string>gradientModeRadioOption;
 };

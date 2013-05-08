@@ -1,4 +1,97 @@
 #include "testApp.h"
+#include "MSASpaceTime.h"
+float nearThreshold = 0;
+float farThreshold = 3000;
+int pixelStep = 2;          // how many pixels to step through the depth map when iterating
+int numScanFrames = 240;    // duration (in frames) for full scan
+
+// physical boundaries of space time continuum
+ofVec3f spaceBoundaryMin    = ofVec3f(-400, -400, 400);
+ofVec3f spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
+
+// spatial resolution for space time continuum
+ofVec3f spaceNumCells;
+
+
+bool doSaveMesh = false;
+bool doPause = false;
+bool doDrawPointCloud = true;
+bool doSlitScan = true;
+bool doDebugInfo = false;
+
+bool usingKinect;   // using kinect or webcam
+
+int gradientMode = 0;
+string gradientModeStr = "";
+
+int kinectAngle;
+float inputWidth, inputHeight;
+
+msa::SpaceTime<ofMesh> spaceTime;   // space time continuum
+
+ofMesh scanMesh;    // final mesh
+//--------------------------------------------------------------
+void setGradientMode(int g) {
+    gradientMode = g;
+    spaceTime.clear();
+    
+    
+    switch(gradientMode) {
+        case 1:
+            gradientModeStr = "left-right";
+            spaceNumCells.set(500, 1, 1);
+            break;
+            
+        case 2:
+            gradientModeStr = "right-left";
+            spaceNumCells.set(500, 1, 1);
+            break;
+            
+        case 3:
+            gradientModeStr = "top-bottom";
+            spaceNumCells.set(1, 500, 1);
+            break;
+            
+        case 4:
+            gradientModeStr = "bottom-top";
+            spaceNumCells.set(1, 500, 1);
+            break;
+            
+        case 5:
+            gradientModeStr = "front-back";
+            spaceNumCells.set(1, 1, 500);
+            break;
+            
+        case 6:
+            gradientModeStr = "back-front";
+            spaceNumCells.set(1, 1, 500);
+            break;
+            
+        case 7:
+            gradientModeStr = "spherical";
+            spaceNumCells.set(30, 30, 30);
+            break;
+            
+        case 8:
+            gradientModeStr = "random";
+            spaceNumCells.set(40, 40, 40);
+            break;
+            
+        case 9:
+            gradientModeStr = "oldest";
+            spaceNumCells.set(2);
+            break;
+            
+        default:
+            gradientModeStr = "most recent";
+            spaceNumCells.set(2);
+            break;
+            
+            
+    }
+    
+    ofLog(OF_LOG_VERBOSE, "setGradientMode: " + ofToString(gradientMode) + " " + gradientModeStr + " (" + ofToString(spaceNumCells.x) + ", " + ofToString(spaceNumCells.y) + ", " + ofToString(spaceNumCells.z) + ")");
+}
 //--------------------------------------------------------------
 void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c) {
 	ofVec3f normal = ((b - a).cross(c - a)).normalize();
@@ -93,6 +186,7 @@ void testApp::setup(){
 	}
     particle.setUsage( GL_DYNAMIC_DRAW );
 	particle.setMode(OF_PRIMITIVE_POINTS);
+    spaceTime.setMaxFrames(numScanFrames);
     
 }
 void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
@@ -100,14 +194,14 @@ void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
 }
 //--------------------------------------------------------------
 void testApp::update(){
-//    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
-//		canon.startLiveView();
-//        timeTry++;
-//        if(timeTry==5)
-//        {
-//            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
-//        }
-//	}
+    //    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
+    //		canon.startLiveView();
+    //        timeTry++;
+    //        if(timeTry==5)
+    //        {
+    //            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
+    //        }
+    //	}
     if(kinect.isConnected())
     {
         kinect.update();
@@ -115,7 +209,117 @@ void testApp::update(){
         // there is a new frame and we are connected
         if(kinect.isFrameNew())
         {
-            
+            if(doSlitScan) {
+                // construct space time continuum
+                msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
+                
+                ofPixelsRef pixelsRef = kinect.getPixelsRef();// grabber->getPixelsRef();
+                // iterate all vertices of mesh, and add to relevant quantum cells
+                for(int j=0; j<inputHeight; j += pixelStep) {
+                    for(int i=0; i<inputWidth; i += pixelStep) {
+                        ofVec3f p;
+                        ofFloatColor c;
+                        bool doIt;
+                        if(usingKinect) {
+                            p = kinect.getWorldCoordinateAt(i, j);
+                            c = kinect.getColorAt(i, j);
+                            doIt = kinect.getDistanceAt(i, j) > 0;
+                        } else {
+                            c = pixelsRef.getColor(i, j);
+                            p.x = ofMap(i, 0, pixelsRef.getWidth(), spaceBoundaryMin.x, spaceBoundaryMax.x);
+                            p.y = ofMap(j, 0, pixelsRef.getHeight(), spaceBoundaryMin.y, spaceBoundaryMax.y);
+                            p.z = ofMap(c.getBrightness(), 1, 0, minRange, maxRange);
+                            doIt = true;
+                        }
+                        if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
+                            ofVec3f index = space->getIndexForPosition(p);
+                            ofMesh &cellMesh = space->getDataAtIndex(index);
+                            cellMesh.addVertex(p);
+                            cellMesh.addColor(c);
+                            if(doDebugInfo) {
+                                int i = index.x;
+                                int j = index.y;
+                                int k = index.z;
+                                if(cellMesh.getNumVertices()>0) printf("UPDATE SPACE pos: %f, %f, %f, cell: %i, %i, %i, numVertices: %i\n", p.x, p.y, p.z, i, j, k, cellMesh.getNumVertices());
+                            }
+                        }
+                    }
+                }
+                
+                // add space to space time continuum
+                spaceTime.addSpace(space);
+                
+                // update mesh
+                mesh.clear();
+                for(int i=0; i<spaceNumCells.x; i++) {
+                    for(int j=0; j<spaceNumCells.y; j++) {
+                        for(int k=0; k<spaceNumCells.z; k++) {
+                            float t;
+                            switch(gradientMode) {
+                                case 0:
+                                    t = 0;  // use most recent mesh
+                                    break;
+                                    
+                                case 1:
+                                    t = i * 1.0f/spaceNumCells.x; // left to right
+                                    break;
+                                    
+                                case 2:
+                                    t = 1.0f - i * 1.0f/spaceNumCells.x; // right to left
+                                    break;
+                                    
+                                case 3:
+                                    t = j * 1.0f/spaceNumCells.y; // up to down
+                                    break;
+                                    
+                                case 4:
+                                    t = 1.0f - j * 1.0f/spaceNumCells.y; // down to up
+                                    break;
+                                    
+                                case 5:
+                                    t = k * 1.0f/spaceNumCells.z; // front to back
+                                    break;
+                                    
+                                case 6:
+                                    t = 1.0f - k * 1.0f/spaceNumCells.z; //  back to front
+                                    break;
+                                    
+                                case 7:
+                                {
+                                    // spherical
+                                    float tx = i/spaceNumCells.x * 2 - 1;
+                                    float ty = j/spaceNumCells.y * 2 - 1;
+                                    float tz = k/spaceNumCells.z * 2 - 1;
+                                    t = tx * tx + ty * ty + tz * tz;
+                                    //                                    t = sqrt(t);
+                                }
+                                    break;
+                                    
+                                case 8:
+                                    t = ofRandomuf();
+                                    break;
+                                    
+                                case 9:
+                                    t = 1;
+                                    break;
+                                    
+                            }
+                            
+                            t = ofClamp(t, 0, 1);
+                            
+                            ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
+                            
+                            mesh.addVertices(cellMesh.getVertices());
+                            mesh.addColors(cellMesh.getColors());
+                            
+                            if(doDebugInfo) {
+                                if(cellMesh.getNumVertices()>0) printf("UPDATE MESH cell: %i, %i, %i, time: %f, numVertices: %i\n", i, j, k, t, cellMesh.getNumVertices());
+                            }
+                        } // k
+                    } // j
+                } // i
+                
+            }
         }}
     if(bOsc)
     {
@@ -344,7 +548,7 @@ void testApp::drawPointCloud() {
 }
 void testApp::exit() {
     canon.endLiveView();
-
+    
     gui1->saveSettings("GUI/GUI1_Settings.xml");
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
@@ -353,22 +557,54 @@ void testApp::setGUI1()
 {
     
 	
-	float dim = 16;
-	float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
-    float length = 255-xInit;
+    float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
+    float length = (ofGetWidth()*0.25)-xInit;
+    int dim = 16;
     
 	
     vector<string> names;
     
-	gui1 = new ofxUICanvas(0, 0, length+xInit, ofGetHeight());
-    
-	gui1->addWidgetDown(new ofxUILabel("PANEL 1: BASICS", OFX_UI_FONT_LARGE));
+	gui1 = new ofxUICanvas(0, 0, ofGetWidth()*0.5, ofGetHeight());
+    gui1->addFPS();
+	gui1->addWidgetDown(new ofxUILabel("PANEL 1: BASICS", OFX_UI_FONT_MEDIUM));
     gui1->addToggle("ENABLE_OSC",&bOsc);
-    gui1->addSlider("MIN_RANGE", 0, 10000, &minRange);
-    gui1->addSlider("MAX_RANGE", 0, 10000, &maxRange);
-    gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance);
-    gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance);
-    gui1->addSlider("BILLBOARD_NORM",0, 100, &bbNormal);
+    gui1->addSlider("MIN_RANGE", 0, 10000, &minRange, length-xInit, dim);
+    gui1->addSlider("MAX_RANGE", 0, 10000, &maxRange, length-xInit, dim);
+    gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance, length-xInit, dim);
+    gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance, length-xInit, dim);
+    gui1->addSlider("BILLBOARD_NORM",0, 100, &bbNormal, length-xInit, dim);
+    
+    
+    //    gui1->addRadio("SHADER_MODE", shaderMode);
+    gui1->addSpacer(length-xInit, dim);
+    gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
+    gui1->addToggle("SLITSCAN",&doSlitScan);
+    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
+    gui1->addSlider("KINECT_ANGLE",-30,30,kinectAngle, length-xInit, dim);
+
+    gradientModeRadioOption.push_back("0: most recent");
+    gradientModeRadioOption.push_back("1: left-right");
+    gradientModeRadioOption.push_back("2: right-left");
+    gradientModeRadioOption.push_back("3: top-bottom");
+    gradientModeRadioOption.push_back("4: bottom-top");
+    gradientModeRadioOption.push_back("5: front-back");
+    gradientModeRadioOption.push_back("6: back-front");
+    gradientModeRadioOption.push_back("7: spherical");
+    gradientModeRadioOption.push_back("8: random");
+    gradientModeRadioOption.push_back("9: oldest");
+    gui1->addRadio("GRADIENT_MODE", gradientModeRadioOption);
+
+    ofxUILabel * lable = new ofxUILabel("SHADER",OFX_UI_FONT_LARGE);
+    gui1->addWidgetEastOf (lable,"PANEL 1: BASICS");
+	for (unsigned i = 0; i < post.size(); ++i)
+    {
+
+		gui1->addWidgetPosition(new ofxUILabelToggle(post[i]->getName(), false, length-xInit),
+                               OFX_UI_WIDGET_POSITION_DOWN,
+                               OFX_UI_ALIGN_RIGHT,
+							   false);
+	}
+    
 	ofAddListener(gui1->newGUIEvent,this,&testApp::guiEvent);
     gui1->setVisible(false);
     gui1->loadSettings("GUI/GUI1_Settings.xml");
@@ -378,6 +614,29 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 	string name = e.widget->getName();
 	int kind = e.widget->getKind();
 	cout << "got event from: " << name << endl;
+    if(kind == OFX_UI_WIDGET_TOGGLE)
+    {
+        for(int  i = 0; i < gradientModeRadioOption.size() ; i++)
+        {
+            if(name == gradientModeRadioOption[i])
+            {
+                setGradientMode(i);
+            }
+        }
+        
+        
+    }
+    else{
+        for (unsigned i = 0; i < post.size(); ++i)
+		{
+            
+			if(post[i]->getName()==e.widget->getName())
+			{
+				post[i]->setEnabled(((ofxUIToggle*)e.widget)->getValue());
+			}
+		}
+    }
+    
     
 }
 //--------------------------------------------------------------
