@@ -2,7 +2,7 @@
 #include "MSASpaceTime.h"
 float nearThreshold = 0;
 float farThreshold = 3000;
-int pixelStep = 2;          // how many pixels to step through the depth map when iterating
+int pixelStep = 3;          // how many pixels to step through the depth map when iterating
 int numScanFrames = 240;    // duration (in frames) for full scan
 
 // physical boundaries of space time continuum
@@ -14,12 +14,12 @@ ofVec3f spaceNumCells;
 
 
 bool doSaveMesh = false;
-bool doPause = false;
-bool doDrawPointCloud = true;
-bool doSlitScan = true;
-bool doDebugInfo = false;
 
-bool usingKinect;   // using kinect or webcam
+//bool doDrawPointCloud = true;
+//bool doSlitScan = true;
+//bool doDebugInfo = false;
+
+//bool usingKinect;   // using kinect or webcam
 
 int gradientMode = 0;
 string gradientModeStr = "";
@@ -111,6 +111,7 @@ void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c, ofVec3f d) {
 }
 //--------------------------------------------------------------
 void testApp::setup(){
+    ofSetLogLevel(OF_LOG_VERBOSE);
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -128,7 +129,8 @@ void testApp::setup(){
 	// zero the tilt on startup
 	angle = 0;
 	kinect.setCameraTiltAngle(angle);
-    
+    inputWidth = kinect.getWidth();
+    inputHeight = kinect.getHeight();
     receiver.setup(7170);
     
     // Setup post-processing chain
@@ -168,24 +170,24 @@ void testApp::setup(){
     ofEnableArbTex();
 	ofEnableAlphaBlending();
     
-    particle.getVertices().resize(NUM_BILLBOARDS);
-	particle.getColors().resize(NUM_BILLBOARDS);
-	particle.getNormals().resize(NUM_BILLBOARDS,ofVec3f(0));
-	
-	// ------------------------- billboard particles
-	for (int i=0; i<NUM_BILLBOARDS; i++) {
-		
-		billboardVels[i].set(ofRandomf(), -1.0, ofRandomf());
-        particle.getVertices()[i].set(ofRandom(-500, 500),
-                                      ofRandom(-500, 500),
-                                      ofRandom(-500, 500));
-		
-		particle.getColors()[i].set(ofColor::fromHsb(ofRandom(96, 160), 0, 255));
-	    
-		
-	}
-    particle.setUsage( GL_DYNAMIC_DRAW );
-	particle.setMode(OF_PRIMITIVE_POINTS);
+//    particle.getVertices().resize(NUM_BILLBOARDS);
+//	particle.getColors().resize(NUM_BILLBOARDS);
+//	particle.getNormals().resize(NUM_BILLBOARDS,ofVec3f(0));
+//	
+//	// ------------------------- billboard particles
+//	for (int i=0; i<NUM_BILLBOARDS; i++) {
+//		
+//		billboardVels[i].set(ofRandomf(), -1.0, ofRandomf());
+//        particle.getVertices()[i].set(ofRandom(-500, 500),
+//                                      ofRandom(-500, 500),
+//                                      ofRandom(-500, 500));
+//		
+//		particle.getColors()[i].set(ofColor::fromHsb(ofRandom(96, 160), 0, 255));
+//	    
+//		
+//	}
+//    particle.setUsage( GL_DYNAMIC_DRAW );
+//	particle.setMode(OF_PRIMITIVE_POINTS);
     spaceTime.setMaxFrames(numScanFrames);
     
 }
@@ -194,14 +196,14 @@ void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
 }
 //--------------------------------------------------------------
 void testApp::update(){
-    //    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
-    //		canon.startLiveView();
-    //        timeTry++;
-    //        if(timeTry==5)
-    //        {
-    //            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
-    //        }
-    //	}
+    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
+		canon.startLiveView();
+        timeTry++;
+        if(timeTry==5)
+        {
+            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
+        }
+	}
     if(kinect.isConnected())
     {
         kinect.update();
@@ -209,118 +211,107 @@ void testApp::update(){
         // there is a new frame and we are connected
         if(kinect.isFrameNew())
         {
-            if(doSlitScan) {
-                // construct space time continuum
-                msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
-                
-                ofPixelsRef pixelsRef = kinect.getPixelsRef();// grabber->getPixelsRef();
-                // iterate all vertices of mesh, and add to relevant quantum cells
-                for(int j=0; j<inputHeight; j += pixelStep) {
-                    for(int i=0; i<inputWidth; i += pixelStep) {
-                        ofVec3f p;
-                        ofFloatColor c;
-                        bool doIt;
-                        if(usingKinect) {
+            if(doPause == false) {
+                if(mode==SLITSCAN) {
+                    // construct space time continuum
+                    msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
+                    
+                    ofPixelsRef pixelsRef = kinect.getPixelsRef();// grabber->getPixelsRef();
+                    // iterate all vertices of mesh, and add to relevant quantum cells
+                    for(int j=0; j<inputHeight; j += pixelStep) {
+                        for(int i=0; i<inputWidth; i += pixelStep) {
+                            ofVec3f p;
+                            ofFloatColor c;
+                            bool doIt;
+
                             p = kinect.getWorldCoordinateAt(i, j);
                             c = kinect.getColorAt(i, j);
                             doIt = kinect.getDistanceAt(i, j) > 0;
-                        } else {
-                            c = pixelsRef.getColor(i, j);
-                            p.x = ofMap(i, 0, pixelsRef.getWidth(), spaceBoundaryMin.x, spaceBoundaryMax.x);
-                            p.y = ofMap(j, 0, pixelsRef.getHeight(), spaceBoundaryMin.y, spaceBoundaryMax.y);
-                            p.z = ofMap(c.getBrightness(), 1, 0, minRange, maxRange);
-                            doIt = true;
-                        }
-                        if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
-                            ofVec3f index = space->getIndexForPosition(p);
-                            ofMesh &cellMesh = space->getDataAtIndex(index);
-                            cellMesh.addVertex(p);
-                            cellMesh.addColor(c);
-                            if(doDebugInfo) {
-                                int i = index.x;
-                                int j = index.y;
-                                int k = index.z;
-                                if(cellMesh.getNumVertices()>0) printf("UPDATE SPACE pos: %f, %f, %f, cell: %i, %i, %i, numVertices: %i\n", p.x, p.y, p.z, i, j, k, cellMesh.getNumVertices());
+
+                            if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
+                                ofVec3f index = space->getIndexForPosition(p);
+                                ofMesh &cellMesh = space->getDataAtIndex(index);
+                                cellMesh.addVertex(p);
+                                cellMesh.addColor(c);
                             }
                         }
                     }
-                }
-                
-                // add space to space time continuum
-                spaceTime.addSpace(space);
-                
-                // update mesh
-                mesh.clear();
-                for(int i=0; i<spaceNumCells.x; i++) {
-                    for(int j=0; j<spaceNumCells.y; j++) {
-                        for(int k=0; k<spaceNumCells.z; k++) {
-                            float t;
-                            switch(gradientMode) {
-                                case 0:
-                                    t = 0;  // use most recent mesh
-                                    break;
-                                    
-                                case 1:
-                                    t = i * 1.0f/spaceNumCells.x; // left to right
-                                    break;
-                                    
-                                case 2:
-                                    t = 1.0f - i * 1.0f/spaceNumCells.x; // right to left
-                                    break;
-                                    
-                                case 3:
-                                    t = j * 1.0f/spaceNumCells.y; // up to down
-                                    break;
-                                    
-                                case 4:
-                                    t = 1.0f - j * 1.0f/spaceNumCells.y; // down to up
-                                    break;
-                                    
-                                case 5:
-                                    t = k * 1.0f/spaceNumCells.z; // front to back
-                                    break;
-                                    
-                                case 6:
-                                    t = 1.0f - k * 1.0f/spaceNumCells.z; //  back to front
-                                    break;
-                                    
-                                case 7:
-                                {
-                                    // spherical
-                                    float tx = i/spaceNumCells.x * 2 - 1;
-                                    float ty = j/spaceNumCells.y * 2 - 1;
-                                    float tz = k/spaceNumCells.z * 2 - 1;
-                                    t = tx * tx + ty * ty + tz * tz;
-                                    //                                    t = sqrt(t);
+                    
+                    // add space to space time continuum
+                    spaceTime.addSpace(space);
+                    
+                    // update mesh
+                    scanMesh.clear();
+                    for(int i=0; i<spaceNumCells.x; i++) {
+                        for(int j=0; j<spaceNumCells.y; j++) {
+                            for(int k=0; k<spaceNumCells.z; k++) {
+                                float t;
+                                switch(gradientMode) {
+                                    case 0:
+                                        t = 0;  // use most recent mesh
+                                        break;
+                                        
+                                    case 1:
+                                        t = i * 1.0f/spaceNumCells.x; // left to right
+                                        break;
+                                        
+                                    case 2:
+                                        t = 1.0f - i * 1.0f/spaceNumCells.x; // right to left
+                                        break;
+                                        
+                                    case 3:
+                                        t = j * 1.0f/spaceNumCells.y; // up to down
+                                        break;
+                                        
+                                    case 4:
+                                        t = 1.0f - j * 1.0f/spaceNumCells.y; // down to up
+                                        break;
+                                        
+                                    case 5:
+                                        t = k * 1.0f/spaceNumCells.z; // front to back
+                                        break;
+                                        
+                                    case 6:
+                                        t = 1.0f - k * 1.0f/spaceNumCells.z; //  back to front
+                                        break;
+                                        
+                                    case 7:
+                                    {
+                                        // spherical
+                                        float tx = i/spaceNumCells.x * 2 - 1;
+                                        float ty = j/spaceNumCells.y * 2 - 1;
+                                        float tz = k/spaceNumCells.z * 2 - 1;
+                                        t = tx * tx + ty * ty + tz * tz;
+                                        //                                    t = sqrt(t);
+                                    }
+                                        break;
+                                        
+                                    case 8:
+                                        t = ofRandomuf();
+                                        break;
+                                        
+                                    case 9:
+                                        t = 1;
+                                        break;
+                                        
                                 }
-                                    break;
-                                    
-                                case 8:
-                                    t = ofRandomuf();
-                                    break;
-                                    
-                                case 9:
-                                    t = 1;
-                                    break;
-                                    
-                            }
-                            
-                            t = ofClamp(t, 0, 1);
-                            
-                            ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
-                            
-                            mesh.addVertices(cellMesh.getVertices());
-                            mesh.addColors(cellMesh.getColors());
-                            
-                            if(doDebugInfo) {
-                                if(cellMesh.getNumVertices()>0) printf("UPDATE MESH cell: %i, %i, %i, time: %f, numVertices: %i\n", i, j, k, t, cellMesh.getNumVertices());
-                            }
-                        } // k
-                    } // j
-                } // i
-                
+                                
+                                t = ofClamp(t, 0, 1);
+                                
+                                ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
+                                
+                                scanMesh.addVertices(cellMesh.getVertices());
+                                scanMesh.addColors(cellMesh.getColors());
+                                
+
+                            } // k
+                        } // j
+                    } // i
+                    
+                }
             }
-        }}
+        }
+    }
     if(bOsc)
     {
         // check for waiting messages
@@ -338,22 +329,22 @@ void testApp::update(){
         }
         cam.orbit(-orbit.y, orbit.x, camDistance);
     }
-    float t = (ofGetElapsedTimef()) * 0.9f;
-	float div = 250.0;
-	
-	for (int i=0; i<NUM_BILLBOARDS; i++) {
-		
-		// noise
-		ofVec3f vec(ofSignedNoise(t, particle.getVertex(i).y/div, particle.getVertex(i).z/div),
-                    ofSignedNoise(particle.getVertex(i).x/div, t, particle.getVertex(i).z/div),
-                    ofSignedNoise(particle.getVertex(i).x/div, particle.getVertex(i).y/div, t));
-		
-		vec *= 10 * ofGetLastFrameTime();
-		billboardVels[i] += vec;
-		particle.getVertices()[i] += billboardVels[i];
-		billboardVels[i] *= 0.94f;
-    	particle.setNormal(i,ofVec3f(10,0,0));
-	}
+//    float t = (ofGetElapsedTimef()) * 0.9f;
+//	float div = 250.0;
+//	
+//	for (int i=0; i<NUM_BILLBOARDS; i++) {
+//		
+//		// noise
+//		ofVec3f vec(ofSignedNoise(t, particle.getVertex(i).y/div, particle.getVertex(i).z/div),
+//                    ofSignedNoise(particle.getVertex(i).x/div, t, particle.getVertex(i).z/div),
+//                    ofSignedNoise(particle.getVertex(i).x/div, particle.getVertex(i).y/div, t));
+//		
+//		vec *= 10 * ofGetLastFrameTime();
+//		billboardVels[i] += vec;
+//		particle.getVertices()[i] += billboardVels[i];
+//		billboardVels[i] *= 0.94f;
+//    	particle.setNormal(i,ofVec3f(10,0,0));
+//	}
 }
 
 //--------------------------------------------------------------
@@ -383,13 +374,13 @@ void testApp::draw(){
     {
         drawPointCloud();
     }
-	billboardShader.begin();
-	ofEnablePointSprites();
-	texture.getTextureReference().bind();
-	particle.draw();
-	texture.getTextureReference().unbind();
-	ofDisablePointSprites();
-    billboardShader.end();
+//	billboardShader.begin();
+//	ofEnablePointSprites();
+//	texture.getTextureReference().bind();
+//	particle.draw();
+//	texture.getTextureReference().unbind();
+//	ofDisablePointSprites();
+//    billboardShader.end();
 	
     
     // end scene and draw
@@ -399,48 +390,62 @@ void testApp::draw(){
     // set gl state back to original
     glPopAttrib();
     
-    glDisable(GL_DEPTH_TEST);
+//
     
     //    }else if(BILLBOARD == mode)
     //    {
     //        cam.end();
     //    }
-    if(!canon.isLiveViewActive())
+    
+    if(canon.isCameraConnected()&& canonDraw)
     {
-        canon.drawLiveView();
+        if(canon.isLiveViewActive() )
+        {
+            float scale = 1;
+            if(canon.getLivePixels().isAllocated())ofGetWidth()/canon.getLivePixels().getWidth();
+            ofPushMatrix();
+            ofScale(scale, scale);
+            canon.drawLiveView();
+            ofPopMatrix();
+        }
+        else{
+            canon.startLiveView();
+        }
     }
+    glDisable(GL_DEPTH_TEST);
 }
 void testApp::drawPointCloud() {
 	int w = 640;
 	int h = 480;
-    if(mode==TRIANGLE)
-    {
-        triangulation.reset();
-        
-        int step = 10;
-        for(int y = 0; y < h; y += step) {
-            for(int x = 0; x < w; x += step) {
-                if(kinect.getDistanceAt(x, y) > minRange && kinect.getDistanceAt(x, y) < maxRange)
-                {
-                    triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
-                    
-                }
-            }
-        }
-        triangulation.triangulate();
-        ofSetColor(255);
-        ofSetLineWidth(1);
-        ofPushMatrix();
-        // the projected points are 'upside down' and 'backwards'
-        ofScale(1, -1, -1);
-        ofTranslate(0, 0, meshDistance); // center the points a bit
-        glEnable(GL_DEPTH_TEST);
-        triangulation.triangleMesh.drawWireframe();
-        triangulation.triangleMesh.drawVertices();
-        glDisable(GL_DEPTH_TEST);
-        ofPopMatrix();
-    }
-    else if(mode==POINT || mode ==BILLBOARD)
+//    if(mode==TRIANGLE)
+//    {
+//        triangulation.reset();
+//        
+//        int step = 10;
+//        for(int y = 0; y < h; y += step) {
+//            for(int x = 0; x < w; x += step) {
+//                if(kinect.getDistanceAt(x, y) > minRange && kinect.getDistanceAt(x, y) < maxRange)
+//                {
+//                    triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
+//                    
+//                }
+//            }
+//        }
+//        triangulation.triangulate();
+//        ofSetColor(255);
+//        ofSetLineWidth(1);
+//        ofPushMatrix();
+//        // the projected points are 'upside down' and 'backwards'
+//        ofScale(1, -1, -1);
+//        ofTranslate(0, 0, meshDistance); // center the points a bit
+//        glEnable(GL_DEPTH_TEST);
+//        triangulation.triangleMesh.drawWireframe();
+//        triangulation.triangleMesh.drawVertices();
+//        glDisable(GL_DEPTH_TEST);
+//        ofPopMatrix();
+//    }
+//    else
+    if(mode==POINT )//|| mode ==BILLBOARD)
     {
         ofVboMesh mesh;
         
@@ -454,10 +459,11 @@ void testApp::drawPointCloud() {
                 {
                     mesh.addColor(kinect.getColorAt(x,y));
                     mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-                    if(mode==BILLBOARD)
-                    {
+                    
+//                    if(mode==BILLBOARD)
+//                    {
                         mesh.addNormal(ofVec3f(bbNormal,0,0));
-                    }
+//                    }
                 }
             }
         }
@@ -471,8 +477,8 @@ void testApp::drawPointCloud() {
         
         ofTranslate(0, 0, meshDistance); // center the points a bit
         
-        if(mode==BILLBOARD)
-        {
+//        if(mode==BILLBOARD)
+//        {
             billboardShader.begin();
             ofEnableAlphaBlending();
             ofEnableBlendMode(OF_BLENDMODE_ADD);
@@ -484,61 +490,80 @@ void testApp::drawPointCloud() {
             ofDisablePointSprites();
             
             billboardShader.end();
-            
-        }
-        else if (mode == POINT){
-            glPointSize(5);
-            mesh.drawVertices();
-        }
+//
+//        }
+//        else if (mode == POINT){
+//            glPointSize(5);
+//            mesh.drawVertices();
+//        }
         
         
         ofPopMatrix();
-    }else if (mode ==DISPLACEMENT)
+    }
+    else if (mode == SLITSCAN)
     {
-        ofVboMesh mesh;
-        
-        mesh.setUsage( GL_DYNAMIC_DRAW );
-        mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-        
-        int step = 2;
-        for(int y = 0; y < h-step; y += step) {
-            for(int x = 0; x < w-step; x += step) {
-                float nwDis = kinect.getDistanceAt(x, y);
-                float neDis = kinect.getDistanceAt(x+step, y);
-                float swDis = kinect.getDistanceAt(x, y+step);
-                float seDis = kinect.getDistanceAt(x+step, y+step);
-                
-                if( nwDis> minRange && nwDis < maxRange &&
-                   neDis> minRange && neDis < maxRange &&
-                   swDis> minRange && swDis < maxRange &&
-                   seDis> minRange && seDis < maxRange )
-                {
-                    //                    mesh.addColor(kinect.getColorAt(x,y));
-                    //                    mesh.addVertex();
-                    ofVec3f nw = kinect.getWorldCoordinateAt(x, y);//ofVec3f( x, y , 0);
-                    ofVec3f ne = kinect.getWorldCoordinateAt(x+step, y);//ofVec3f( x + step, y, 0);
-                    ofVec3f sw = kinect.getWorldCoordinateAt(x, y+step);//ofVec3f( x, y + step, 0);
-                    ofVec3f se =kinect.getWorldCoordinateAt(x+step, y+step) ;//ofVec3f( x + step, y + step, 0);
-                    
-                    addFace(mesh, nw, ne, se, sw);
-                }
-            }
-        }
-        
+        glPointSize(5);
         ofPushMatrix();
+        // the projected points are 'upside down' and 'backwards'
         ofScale(1, -1, -1);
+//        float s = 0.8;
+//        ofScale(s, s, s);
+        ofTranslate(0, 0, -1000); // center the points a bit
+        glEnable(GL_DEPTH_TEST);
         
-        ofTranslate(0, 0, meshDistance); // center the points a bit
-        kinect.getTextureReference().bind();
-        mesh.draw();
-        kinect.getTextureReference().unbind();
-        //        mesh.drawWireframe();
-        //        mesh.drawVertices();
+        scanMesh.drawVertices();
         
-        
+        glDisable(GL_DEPTH_TEST);
         ofPopMatrix();
+        
         
     }
+//        else if (mode ==DISPLACEMENT)
+//    {
+//        ofVboMesh mesh;
+//        
+//        mesh.setUsage( GL_DYNAMIC_DRAW );
+//        mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+//        
+//        int step = 2;
+//        for(int y = 0; y < h-step; y += step) {
+//            for(int x = 0; x < w-step; x += step) {
+//                float nwDis = kinect.getDistanceAt(x, y);
+//                float neDis = kinect.getDistanceAt(x+step, y);
+//                float swDis = kinect.getDistanceAt(x, y+step);
+//                float seDis = kinect.getDistanceAt(x+step, y+step);
+//                
+//                if( nwDis> minRange && nwDis < maxRange &&
+//                   neDis> minRange && neDis < maxRange &&
+//                   swDis> minRange && swDis < maxRange &&
+//                   seDis> minRange && seDis < maxRange )
+//                {
+//                    //                    mesh.addColor(kinect.getColorAt(x,y));
+//                    //                    mesh.addVertex();
+//                    ofVec3f nw = kinect.getWorldCoordinateAt(x, y);//ofVec3f( x, y , 0);
+//                    ofVec3f ne = kinect.getWorldCoordinateAt(x+step, y);//ofVec3f( x + step, y, 0);
+//                    ofVec3f sw = kinect.getWorldCoordinateAt(x, y+step);//ofVec3f( x, y + step, 0);
+//                    ofVec3f se =kinect.getWorldCoordinateAt(x+step, y+step) ;//ofVec3f( x + step, y + step, 0);
+//                    
+//                    addFace(mesh, nw, ne, se, sw);
+//                }
+//            }
+//        }
+//        
+//        ofPushMatrix();
+//        ofScale(1, -1, -1);
+//        
+//        ofTranslate(0, 0, meshDistance); // center the points a bit
+//        kinect.getTextureReference().bind();
+//        mesh.draw();
+//        kinect.getTextureReference().unbind();
+//        //        mesh.drawWireframe();
+//        //        mesh.drawVertices();
+//        
+//        
+//        ofPopMatrix();
+//        
+//    }
     
     
     
@@ -573,13 +598,15 @@ void testApp::setGUI1()
     gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance, length-xInit, dim);
     gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance, length-xInit, dim);
     gui1->addSlider("BILLBOARD_NORM",0, 100, &bbNormal, length-xInit, dim);
-    
-    
-    //    gui1->addRadio("SHADER_MODE", shaderMode);
+    gui1->addToggle("DRAW_CANOM", &canonDraw);
+    renderMode.push_back("POINT");
+        renderMode.push_back("SLITSCAN");
+    gui1->addRadio("RENDER_MODE", renderMode);
     gui1->addSpacer(length-xInit, dim);
     gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
-    gui1->addToggle("SLITSCAN",&doSlitScan);
-    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
+//    gui1->addToggle("SLITSCAN",&doSlitScan);
+//    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
+    gui1->addToggle("PAUSE", &doPause);
     gui1->addSlider("KINECT_ANGLE",-30,30,kinectAngle, length-xInit, dim);
 
     gradientModeRadioOption.push_back("0: most recent");
@@ -624,7 +651,13 @@ void testApp::guiEvent(ofxUIEventArgs &e)
             }
         }
         
-        
+            if(name =="POINT")
+            {
+                mode = POINT;
+            }else if(name == "SLITSCAN")
+            {
+                mode = SLITSCAN;
+            }
     }
     else{
         for (unsigned i = 0; i < post.size(); ++i)
@@ -643,6 +676,9 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 void testApp::keyPressed(int key){
     switch(key)
     {
+        case 27:
+            canon.endLiveView();
+            break;
         case ' ':
             
             
@@ -656,15 +692,15 @@ void testApp::keyPressed(int key){
         case 'p':
             mode = POINT;
             break;
-        case 't':
-            mode = TRIANGLE;
-            break;
-        case 'b':
-            mode = BILLBOARD;
-            break;
-        case 'd':
-            mode = DISPLACEMENT;
-            break;
+//        case 't':
+//            mode = TRIANGLE;
+//            break;
+//        case 'b':
+//            mode = BILLBOARD;
+//            break;
+//        case 'd':
+//            mode = DISPLACEMENT;
+//            break;
         case '\t':
             gui1->toggleVisible();
 			break;

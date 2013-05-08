@@ -5,11 +5,11 @@
 #include "ofxKinect.h"
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-#include "ofxDelaunay.h"
+//#include "ofxDelaunay.h"
 #include "ofxUI.h"
 #include "ofxPostProcessing.h"
 #include "Canon.h"
-#define NUM_BILLBOARDS 10000
+//#define NUM_BILLBOARDS 10000
 
 class testApp : public ofBaseApp{
     
@@ -31,10 +31,10 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     ofxKinect kinect;
-    ofxDelaunay triangulation;
+//    ofxDelaunay triangulation;
     float angle;
     ofEasyCam cam;
-    ofMesh mesh;
+//    ofMesh mesh;
     ofxOscReceiver receiver;
     ofxPostProcessing post;
     ofxUICanvas gui;
@@ -49,9 +49,10 @@ public:
     enum MODE
     {
         POINT,
-        TRIANGLE,
-        BILLBOARD,
-        DISPLACEMENT,
+        SLITSCAN,
+//        TRIANGLE,
+//        BILLBOARD,
+//        DISPLACEMENT,
     };
     MODE mode;
     ofxUICanvas *gui1;
@@ -65,7 +66,11 @@ public:
     ofDirectory dir;
     int numEntry;
     
-    ofVboMesh particle;
-    ofVec3f billboardVels[NUM_BILLBOARDS];
+//    ofVboMesh particle;
+//    ofVec3f billboardVels[NUM_BILLBOARDS];
+    vector<string>renderMode;
     vector<string>gradientModeRadioOption;
+    bool doPause ;
+    bool canonDraw;
+    ofTexture live_texture;
 };

@@ -6,36 +6,46 @@
 <Widget>
     <Kind>4</Kind>
     <Name>MIN_RANGE</Name>
-    <Value>1867.088623047</Value>
+    <Value>96.153846741</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>MAX_RANGE</Name>
-    <Value>2024.291503906</Value>
+    <Value>5929.487304688</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>CAM_DISTANCE</Name>
-    <Value>1174.089111328</Value>
+    <Value>320.512847900</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>MESH_DISTANCE</Name>
-    <Value>-1578.947265625</Value>
+    <Value>-1089.743164062</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>BILLBOARD_NORM</Name>
-    <Value>39.676113129</Value>
+    <Value>36.858974457</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
-    <Name>SLITSCAN</Name>
+    <Name>DRAW_CANOM</Name>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>POINT</Name>
     <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
-    <Name>USE_KINECT</Name>
+    <Name>SLITSCAN</Name>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>PAUSE</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
@@ -61,7 +71,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>3: top-bottom</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -76,7 +86,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>6: back-front</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -96,12 +106,12 @@
 <Widget>
     <Kind>17</Kind>
     <Name>fxaa</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>17</Kind>
     <Name>bloom</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>17</Kind>
@@ -110,7 +120,7 @@
 </Widget>
 <Widget>
     <Kind>17</Kind>
-    <Name>kaleidoscope</Name>
+    <Name>kaleido</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
