@@ -1,42 +1,72 @@
 <Widget>
     <Kind>2</Kind>
     <Name>ENABLE_OSC</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
-    <Name>MIN_RANGE</Name>
-    <Value>96.153846741</Value>
+    <Name>centerPoint_X</Name>
+    <Value>57.138671875</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
-    <Name>MAX_RANGE</Name>
-    <Value>5929.487304688</Value>
+    <Name>centerPoint_Y</Name>
+    <Value>66.218750000</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>centerPoint_Z</Name>
+    <Value>275.202148438</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>pixelStep</Name>
+    <Value>2.967741966</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>nearThreshold</Name>
+    <Value>0.000000000</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>farThreshold</Name>
+    <Value>2852.564208984</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>CAM_DISTANCE</Name>
-    <Value>320.512847900</Value>
+    <Value>4230.769042969</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>MESH_DISTANCE</Name>
-    <Value>-1089.743164062</Value>
+    <Value>-833.333007812</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>depthScale</Name>
+    <Value>0.899193525</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>BILLBOARD_NORM</Name>
-    <Value>36.858974457</Value>
-</Widget>
-<Widget>
-    <Kind>2</Kind>
-    <Name>DRAW_CANOM</Name>
-    <Value>0</Value>
+    <Value>4.838706970</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>POINT</Name>
     <Value>1</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>DISPLACEMENT</Name>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>TRIANGLE</Name>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -51,7 +81,7 @@
 <Widget>
     <Kind>4</Kind>
     <Name>KINECT_ANGLE</Name>
-    <Value>0.000000000</Value>
+    <Value>-1.693548203</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -71,7 +101,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>3: top-bottom</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -91,7 +121,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>7: spherical</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -116,25 +146,35 @@
 <Widget>
     <Kind>17</Kind>
     <Name>dof</Name>
+    <Value>1</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>OF_LOG_VERBOSE</Name>
+    <Value>1</Value>
+</Widget>
+<Widget>
+    <Kind>2</Kind>
+    <Name>OF_LOG_NOTICE</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
-    <Kind>17</Kind>
-    <Name>kaleido</Name>
+    <Kind>2</Kind>
+    <Name>OF_LOG_WARNING</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
-    <Kind>17</Kind>
-    <Name>noisewarp</Name>
+    <Kind>2</Kind>
+    <Name>OF_LOG_ERROR</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
-    <Kind>17</Kind>
-    <Name>pixelate</Name>
+    <Kind>2</Kind>
+    <Name>OF_LOG_FATAL_ERROR</Name>
     <Value>0</Value>
 </Widget>
 <Widget>
-    <Kind>17</Kind>
-    <Name>edge</Name>
+    <Kind>2</Kind>
+    <Name>OF_LOG_SILENT</Name>
     <Value>0</Value>
 </Widget>

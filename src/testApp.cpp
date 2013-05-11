@@ -1,13 +1,17 @@
 #include "testApp.h"
 #include "MSASpaceTime.h"
-float nearThreshold = 0;
-float farThreshold = 3000;
-int pixelStep = 3;          // how many pixels to step through the depth map when iterating
+const float FovX = 1.0144686707507438;
+const float FovY = 0.78980943449644714;
+const float XtoZ = tanf(FovX / 2) * 2;
+const float YtoZ = tanf(FovY / 2) * 2;
+const unsigned int Xres = 640;
+const unsigned int Yres = 480;
+int pixelStep = 2;          // how many pixels to step through the depth map when iterating
 int numScanFrames = 240;    // duration (in frames) for full scan
 
 // physical boundaries of space time continuum
-ofVec3f spaceBoundaryMin    = ofVec3f(-400, -400, 400);
-ofVec3f spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
+ofVec3f spaceBoundaryMin;
+ofVec3f spaceBoundaryMax;
 
 // spatial resolution for space time continuum
 ofVec3f spaceNumCells;
@@ -29,7 +33,7 @@ float inputWidth, inputHeight;
 
 msa::SpaceTime<ofMesh> spaceTime;   // space time continuum
 
-ofMesh scanMesh;    // final mesh
+
 //--------------------------------------------------------------
 void setGradientMode(int g) {
     gradientMode = g;
@@ -93,25 +97,24 @@ void setGradientMode(int g) {
     ofLog(OF_LOG_VERBOSE, "setGradientMode: " + ofToString(gradientMode) + " " + gradientModeStr + " (" + ofToString(spaceNumCells.x) + ", " + ofToString(spaceNumCells.y) + ", " + ofToString(spaceNumCells.z) + ")");
 }
 //--------------------------------------------------------------
-void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c) {
-	ofVec3f normal = ((b - a).cross(c - a)).normalize();
-    mesh.addVertex(a);
-	mesh.addNormal(normal);
-	mesh.addTexCoord(b);
-	mesh.addVertex(b);
-	mesh.addNormal(normal);
-	mesh.addTexCoord(c);
-	mesh.addVertex(c);
+ofVec3f ConvertProjectiveToRealWorld(float x, float y, float z) {
+	return ofVec3f((x / Xres - .5f) * z * XtoZ,
+                   (y / Yres - .5f) * z * YtoZ,
+                   z);
 }
 
-//--------------------------------------------------------------
-void addFace(ofMesh& mesh, ofVec3f a, ofVec3f b, ofVec3f c, ofVec3f d) {
-	addFace(mesh, a, b, c);
-	addFace(mesh, a, c, d);
+ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
+	ofVec3f side1 = a - b;
+	ofVec3f side2 = c - b;
+	ofVec3f normal = side1.cross(side2);
+	normal.normalize();
+	return normal;
 }
 //--------------------------------------------------------------
 void testApp::setup(){
-    ofSetLogLevel(OF_LOG_VERBOSE);
+    spaceBoundaryMin    = ofVec3f(-400, -400, 400);
+    spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
+//    ofSetLogLevel(OF_LOG_VERBOSE);
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -138,28 +141,32 @@ void testApp::setup(){
     post.createPass<FxaaPass>()->setEnabled(false);
     post.createPass<BloomPass>()->setEnabled(false);
     post.createPass<DofPass>()->setEnabled(false);
-    post.createPass<KaleidoscopePass>()->setEnabled(false);
-    post.createPass<NoiseWarpPass>()->setEnabled(false);
-    post.createPass<PixelatePass>()->setEnabled(false);
-    post.createPass<EdgePass>()->setEnabled(false);
-    
-    // Setup light
-    //	light.setPosition(0, 0, 2000);
+    //    post.createPass<KaleidoscopePass>()->setEnabled(false);
+    //    post.createPass<NoiseWarpPass>()->setEnabled(false);
+    //    post.createPass<PixelatePass>()->setEnabled(false);
+    //    post.createPass<EdgePass>()->setEnabled(false);
     
     orbit.set(0,0,0);
-    canon.start();
-	canon.addPictureTakenListener(this, &testApp::onPictureTaken);
-    timeTry = 0;
     
     mode = POINT;
-    minRange = 0;
-    maxRange = 10000;
+    nearThreshold = 0;
+    farThreshold = 10000;
     setGUI1();
     
     
 	// load the bilboard shader
 	// this is used to change the
 	// size of the particle
+    displacement.load("depth");
+    displacement.begin();
+//	displacement.setUniform1f("brightness", 1);
+//	displacement.setUniform1f("contrast", 1);
+//	displacement.setUniform1f("saturation", 0.5);
+//	displacement.setUniform1i("invert",false);
+//	displacement.setUniform1f("alpha", 1.0 );
+//	displacement.setUniform1i("tex", 0);
+    //	shader.setUniformTexture("tex", fbo.getTextureReference(), 1);
+	displacement.end();
 	billboardShader.load("Billboard");
     dir.allowExt("png");
 	numEntry = dir.listDir("images/");
@@ -170,40 +177,122 @@ void testApp::setup(){
     ofEnableArbTex();
 	ofEnableAlphaBlending();
     
-//    particle.getVertices().resize(NUM_BILLBOARDS);
-//	particle.getColors().resize(NUM_BILLBOARDS);
-//	particle.getNormals().resize(NUM_BILLBOARDS,ofVec3f(0));
-//	
-//	// ------------------------- billboard particles
-//	for (int i=0; i<NUM_BILLBOARDS; i++) {
-//		
-//		billboardVels[i].set(ofRandomf(), -1.0, ofRandomf());
-//        particle.getVertices()[i].set(ofRandom(-500, 500),
-//                                      ofRandom(-500, 500),
-//                                      ofRandom(-500, 500));
-//		
-//		particle.getColors()[i].set(ofColor::fromHsb(ofRandom(96, 160), 0, 255));
-//	    
-//		
-//	}
-//    particle.setUsage( GL_DYNAMIC_DRAW );
-//	particle.setMode(OF_PRIMITIVE_POINTS);
+    for (int j=0; j<NUM_STRIP; j++)
+    {
+        pos[j].set(ofRandom(0, ofGetWidth()),ofRandom(0,ofGetHeight()),0);
+        vec[j].set(0,0,0);
+        acc[j].set(ofRandom(-1,1),ofRandom(-1,1),0);
+        age[j] = 1;
+        float h = ofRandom(100,200);
+        for (int i=0; i<LENGTH; i++)
+        {
+            int index = i+(j*LENGTH);
+            strip[index].set(ofGetWidth()*0.5,ofGetHeight()*0.5,0);
+            float brightness = sinf(PI*float((i*0.5)*1.f/LENGTH*0.5f))*255;
+            color[index].set(ofColor::fromHsb(h,255, 255,brightness));
+        }
+        
+        for (int i=0; i<LOC_LENGTH; i++)
+        {
+            int index = i+(j*LOC_LENGTH);
+            loc[index].set(0,0,0);
+        }
+        
+        
+    }
+    total = NUM_STRIP*LENGTH;
+    vbo.setVertexData(strip, total, GL_DYNAMIC_DRAW);
+	vbo.setColorData(color, total, GL_DYNAMIC_DRAW);
+    count = 0;
+
     spaceTime.setMaxFrames(numScanFrames);
+    setGradientMode(0);
     
-}
-void testApp::onPictureTaken(roxlu::CanonPictureEvent& ev) {
-	cout << ev.getFilePath() << endl;
+    port = 12345;
+    duration.setup(port);
+	//ofxDuration is an OSC receiver, with special functions to listen for Duration specific messages
+	//optionally set up a font for debugging
+	duration.setupFont("GUI/NewMedia Fett.ttf", 12);
+	ofAddListener(duration.events.trackUpdated, this, &testApp::trackUpdated);
 }
 //--------------------------------------------------------------
+
+void testApp::trackUpdated(ofxDurationEventArgs& args){
+	ofLogVerbose("Duration Event") << "track type " << args.track->type << " updated with name " << args.track->name << " and value " << args.track->value << endl;
+    if (args.track->name == "/CENTER_X") {
+        centerPoint.x = args.track->value;
+    }else if (args.track->name == "/CENTER_Y") {
+        centerPoint.y = args.track->value;
+    }
+    else if (args.track->name == "/CENTER_Z") {
+        centerPoint.z = args.track->value;
+    }
+}
+
+//--------------------------------------------------------------
 void testApp::update(){
-    if(!canon.isLiveViewActive() && canon.isSessionOpen() && timeTry<5) {
-		canon.startLiveView();
-        timeTry++;
-        if(timeTry==5)
+    float t = (ofGetElapsedTimef()) * 0.9f;
+    float div = 250.0;
+    
+    for (int j=0; j<NUM_STRIP; j++)
+    {
+        if(age[j]>0)
         {
-            ofLogError("ofxCanon") << "5 time faile to try stop reconnect";
+            ofVec3f _vec(ofSignedNoise(t, pos[j].y/div, pos[j].z/div),
+                         ofSignedNoise(pos[j].x/div, t, pos[j].z/div),
+                         ofSignedNoise(pos[j].x/div, pos[j].y/div,t));
+            _vec *=  ofGetLastFrameTime()*50;
+            vec[j]+=_vec;
+            acc[j] = (attraction-acc[j])*0.1;
+            vec[j]+=acc[j];
+            vec[j]*=0.9;
+            ofVec3f Off;
+            float radius = 10;
+            for (int i=LOC_LENGTH-1; i>=1; i--)
+            {
+                int index = i+(j*LOC_LENGTH);
+                loc[index].set(loc[index-1]);
+            }
+            for (int i=0; i<LOC_LENGTH; i++)
+            {
+                int index = i+(j*LOC_LENGTH);
+                int index2 = (i*2)+(j*LENGTH);
+                
+                
+                radius = sinf(PI*float(i*1.f/LOC_LENGTH))*15;
+                {
+                    ofVec3f perp0 = loc[index] - loc[index+1];
+                    ofVec3f perp1 = perp0.getCrossed( ofVec3f( 0, 1, 0 ) ).getNormalized();
+                    ofVec3f perp2 = perp0.getCrossed( perp1 ).getNormalized();
+                    perp1 = perp0.getCrossed( perp2 ).getNormalized();
+                    Off.x        = perp1.x * radius*age[j];
+                    Off.y       = perp1.y * radius*age[j];
+                    Off.z        = perp1.z * radius*age[j];
+                    
+                    strip[(index2)]=loc[index]-Off;
+                    
+                    strip[(index2+1)]=loc[index]+Off;
+                }
+            }
+            loc[j*LOC_LENGTH] = pos[j];
+            pos[j]+=vec[j];
+            age[j]-=0.02;
         }
-	}
+        else
+        {
+            for (int i=0; i<LOC_LENGTH; i++)
+            {
+                int index = i+(j*LOC_LENGTH);
+                loc[index].set(pos[j]);
+                int index2 = (i*2)+(j*LENGTH);
+                strip[(index2)]=loc[index];
+                
+                strip[(index2+1)]=loc[index];
+            }
+        }
+        
+        
+    }
     if(kinect.isConnected())
     {
         kinect.update();
@@ -218,21 +307,23 @@ void testApp::update(){
                     
                     ofPixelsRef pixelsRef = kinect.getPixelsRef();// grabber->getPixelsRef();
                     // iterate all vertices of mesh, and add to relevant quantum cells
+                    float maxZ = 9999;
                     for(int j=0; j<inputHeight; j += pixelStep) {
                         for(int i=0; i<inputWidth; i += pixelStep) {
                             ofVec3f p;
                             ofFloatColor c;
                             bool doIt;
-
+                            
                             p = kinect.getWorldCoordinateAt(i, j);
                             c = kinect.getColorAt(i, j);
                             doIt = kinect.getDistanceAt(i, j) > 0;
-
+                            
                             if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
                                 ofVec3f index = space->getIndexForPosition(p);
                                 ofMesh &cellMesh = space->getDataAtIndex(index);
                                 cellMesh.addVertex(p);
                                 cellMesh.addColor(c);
+                                if(maxZ<p.z)attraction = p;
                             }
                         }
                     }
@@ -241,7 +332,7 @@ void testApp::update(){
                     spaceTime.addSpace(space);
                     
                     // update mesh
-                    scanMesh.clear();
+                    mesh.clear();
                     for(int i=0; i<spaceNumCells.x; i++) {
                         for(int j=0; j<spaceNumCells.y; j++) {
                             for(int k=0; k<spaceNumCells.z; k++) {
@@ -300,14 +391,124 @@ void testApp::update(){
                                 
                                 ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
                                 
-                                scanMesh.addVertices(cellMesh.getVertices());
-                                scanMesh.addColors(cellMesh.getColors());
+                                mesh.addVertices(cellMesh.getVertices());
+                                mesh.addColors(cellMesh.getColors());
                                 
-
+                                
                             } // k
                         } // j
                     } // i
                     
+                }
+            }
+            if (mode==DISPLACEMENT)
+            {
+                
+                int width = kinect.getWidth();
+                int height = kinect.getHeight();
+                float* distancePixels = kinect.getDistancePixels(); // distance in centimeters
+                mesh.clear();
+                mesh.setMode(OF_PRIMITIVE_TRIANGLES);
+                float maxZ = 9999;
+                for(int y = 0; y < height - 1; y++) { // don't go to the end
+                    for(int x = 0; x < width - 1; x++) { // don't go to the end
+                        
+                        // get indices for each corner
+                        int nwi = (y + 0) * width + (x + 0);
+                        int nei = (y + 0) * width + (x + 1);
+                        int sei = (y + 1) * width + (x + 1);
+                        int swi = (y + 1) * width + (x + 0);
+                        
+                        // get z values for each corner
+                        float nwz = distancePixels[nwi];
+                        float nez = distancePixels[nei];
+                        float sez = distancePixels[sei];
+                        float swz = distancePixels[swi];
+                        
+                        if(nwz > 0 && nez > 0 && sez > 0 && swz > 0 && nwz>nearThreshold && nwz<
+                           farThreshold) {
+
+                            // ignore empty depth pixels
+                            // get real world locations for each corner
+                            ofVec3f nwv = ConvertProjectiveToRealWorld(x + 0, y + 0, nwz);
+                            ofVec3f nev = ConvertProjectiveToRealWorld(x + 1, y + 0, nez);
+                            ofVec3f sev = ConvertProjectiveToRealWorld(x + 1, y + 1, sez);
+                            ofVec3f swv = ConvertProjectiveToRealWorld(x + 0, y + 1, swz);
+                            if(maxZ<nwz)attraction =  nwv;
+                            // compute normal for the upper left
+                            ofVec3f normal = getNormal(nwv, nev, swv);
+                            
+                            // add the upper left triangle
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x,y));
+                            mesh.addVertex(nwv);
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x+1,y));
+                            mesh.addVertex(nev);
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x,y+1));
+                            mesh.addVertex(swv);
+                            
+                            // add the bottom right triangle
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x+1,y));
+                            mesh.addVertex(nev);
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x+1,y+1));
+                            mesh.addVertex(sev);
+                            mesh.addNormal(normal);
+                            mesh.addTexCoord(ofVec2f(x,y+1));
+                            mesh.addVertex(swv);
+                        }
+                    }
+                }
+            }
+            else if(mode==TRIANGLE)
+            {
+                triangulation.reset();
+                
+                int step = 10;
+                int w = kinect.getWidth();
+                int h = kinect.getHeight();
+                float maxZ = 9999;
+                for(int y = 0; y < h; y += step) {
+                    for(int x = 0; x < w; x += step) {
+                        if(kinect.getDistanceAt(x, y) > nearThreshold && kinect.getDistanceAt(x, y) < farThreshold)
+                        {
+                            
+                            ofVec3f cur = kinect.getWorldCoordinateAt(x, y);
+                            if(maxZ<cur.z)attraction = cur;
+                                
+                            triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
+                            
+                        }
+                    }
+                }
+                triangulation.triangulate();
+            }
+            else if(mode==POINT )
+            {
+                
+                mesh.clear();
+                
+                mesh.setMode(OF_PRIMITIVE_POINTS);
+                int w = kinect.getWidth();
+                int h = kinect.getHeight();
+                int step = 2;
+                float maxZ = 9999;
+                for(int y = 0; y < h; y += step) {
+                    for(int x = 0; x < w; x += step) {
+                        if(kinect.getDistanceAt(x, y) > nearThreshold && kinect.getDistanceAt(x, y) < farThreshold)
+                        {
+                            ofVec3f cur = kinect.getWorldCoordinateAt(x, y);
+                            if(maxZ<cur.z)attraction =  cur;
+                            mesh.addColor(kinect.getColorAt(x,y));
+                            mesh.addVertex(cur);
+                            
+                            mesh.addNormal(ofVec3f(bbNormal,0,0));
+                            
+                        }
+                    }
                 }
             }
         }
@@ -326,25 +527,44 @@ void testApp::update(){
                 orbit.y = m.getArgAsInt32(1);
                 orbit.z = m.getArgAsInt32(2);
             }
+            else if(m.getAddress() == "/mode"){
+                int _mode = m.getArgAsInt32(0);
+                switch(_mode)
+                {
+                    case 0:
+                        mode = POINT;
+                        break;
+                    case 1:
+                        mode = DISPLACEMENT;
+                        break;
+                    case 2:
+                        mode = SLITSCAN;
+                        break;
+                    default:
+                        mode = POINT;
+                        break;
+                        
+                }
+            }
+            else if(m.getAddress() == "/slitscan"){
+                int _mode = m.getArgAsInt32(0);
+                setGradientMode(_mode);
+            }
+            else if(m.getAddress() == "/mouse"){
+                float x = m.getArgAsFloat(0)*ofGetWidth();
+                float y = m.getArgAsFloat(1)*ofGetHeight();
+                float vx = m.getArgAsFloat(2);
+                float vy = m.getArgAsFloat(3);
+
+                fireStrip( x , y,  vx, vy);
+
+            }
         }
-        cam.orbit(-orbit.y, orbit.x, camDistance);
+        cam.lookAt(ofVec3f(0,0,meshDistance));
+        cam.setPosition(centerPoint);
+//        cam.orbit(0,0, camDistance,centerPoint);
     }
-//    float t = (ofGetElapsedTimef()) * 0.9f;
-//	float div = 250.0;
-//	
-//	for (int i=0; i<NUM_BILLBOARDS; i++) {
-//		
-//		// noise
-//		ofVec3f vec(ofSignedNoise(t, particle.getVertex(i).y/div, particle.getVertex(i).z/div),
-//                    ofSignedNoise(particle.getVertex(i).x/div, t, particle.getVertex(i).z/div),
-//                    ofSignedNoise(particle.getVertex(i).x/div, particle.getVertex(i).y/div, t));
-//		
-//		vec *= 10 * ofGetLastFrameTime();
-//		billboardVels[i] += vec;
-//		particle.getVertices()[i] += billboardVels[i];
-//		billboardVels[i] *= 0.94f;
-//    	particle.setNormal(i,ofVec3f(10,0,0));
-//	}
+    
 }
 
 //--------------------------------------------------------------
@@ -352,227 +572,144 @@ void testApp::draw(){
     
     ofBackground(0);
     
-    // copy enable part of gl state
-    
-    // begin scene to post process
-    //    if(mode == POINT || mode == TRIANGLE)
-    //    {
+
     glPushAttrib(GL_ENABLE_BIT);
     
     // setup gl state
     glEnable(GL_DEPTH_TEST);
-    //        glEnable(GL_CULL_FACE);
-    //    light.enable();
     
     post.begin(cam);
-    
-    //    }else if(BILLBOARD == mode)
-    //    {
-    //        cam.begin();
-    //    }
+
     if(kinect.isConnected())
     {
         drawPointCloud();
     }
-//	billboardShader.begin();
-//	ofEnablePointSprites();
-//	texture.getTextureReference().bind();
-//	particle.draw();
-//	texture.getTextureReference().unbind();
-//	ofDisablePointSprites();
-//    billboardShader.end();
-	
+    vbo.bind();
+	vbo.updateVertexData(strip, total);
+	vbo.updateColorData(color, total);
     
-    // end scene and draw
-    //    if(mode == POINT|| mode == TRIANGLE)
-    //    {
-    post.end();
-    // set gl state back to original
+    
+    for (int j=0; j<NUM_STRIP; j++)
+        
+    {
+        int index = j * LENGTH;
+        
+        vbo.draw(GL_TRIANGLE_STRIP, index,LENGTH);
+        
+    }
+    
+    
+	vbo.unbind();
+        post.end();
     glPopAttrib();
     
-//
     
-    //    }else if(BILLBOARD == mode)
-    //    {
-    //        cam.end();
-    //    }
-    
-    if(canon.isCameraConnected()&& canonDraw)
-    {
-        if(canon.isLiveViewActive() )
-        {
-            float scale = 1;
-            if(canon.getLivePixels().isAllocated())ofGetWidth()/canon.getLivePixels().getWidth();
-            ofPushMatrix();
-            ofScale(scale, scale);
-            canon.drawLiveView();
-            ofPopMatrix();
-        }
-        else{
-            canon.startLiveView();
-        }
-    }
     glDisable(GL_DEPTH_TEST);
+
+    if(ofGetLogLevel()==OF_LOG_VERBOSE)
+    {
+        duration.draw(0,0, ofGetWidth(), ofGetHeight());
+    }
 }
 void testApp::drawPointCloud() {
 	int w = 640;
 	int h = 480;
-//    if(mode==TRIANGLE)
-//    {
-//        triangulation.reset();
-//        
-//        int step = 10;
-//        for(int y = 0; y < h; y += step) {
-//            for(int x = 0; x < w; x += step) {
-//                if(kinect.getDistanceAt(x, y) > minRange && kinect.getDistanceAt(x, y) < maxRange)
-//                {
-//                    triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
-//                    
-//                }
-//            }
-//        }
-//        triangulation.triangulate();
-//        ofSetColor(255);
-//        ofSetLineWidth(1);
-//        ofPushMatrix();
-//        // the projected points are 'upside down' and 'backwards'
-//        ofScale(1, -1, -1);
-//        ofTranslate(0, 0, meshDistance); // center the points a bit
-//        glEnable(GL_DEPTH_TEST);
-//        triangulation.triangleMesh.drawWireframe();
-//        triangulation.triangleMesh.drawVertices();
-//        glDisable(GL_DEPTH_TEST);
-//        ofPopMatrix();
-//    }
-//    else
-    if(mode==POINT )//|| mode ==BILLBOARD)
-    {
-        ofVboMesh mesh;
-        
-        mesh.setUsage( GL_DYNAMIC_DRAW );
-        mesh.setMode(OF_PRIMITIVE_POINTS);
-        
-        int step = 2;
-        for(int y = 0; y < h; y += step) {
-            for(int x = 0; x < w; x += step) {
-                if(kinect.getDistanceAt(x, y) > minRange && kinect.getDistanceAt(x, y) < maxRange)
-                {
-                    mesh.addColor(kinect.getColorAt(x,y));
-                    mesh.addVertex(kinect.getWorldCoordinateAt(x, y));
-                    
-//                    if(mode==BILLBOARD)
-//                    {
-                        mesh.addNormal(ofVec3f(bbNormal,0,0));
-//                    }
-                }
-            }
-        }
-        
-        ofPushMatrix();
-        //        ofRotateX( orbit.x );
-        //		ofRotateY( orbit.y );
-        //		ofRotateZ( orbit.z );
-        // the projected points are 'upside down' and 'backwards'
+    ofPushMatrix();
+    // the projected points are 'upside down' and 'backwards'
+
+    ofRotateX(orbit.x);
+    ofRotateY(orbit.y);
+    ofRotateZ(orbit.z);
         ofScale(1, -1, -1);
+    ofTranslate(0, 0, meshDistance); // center the points a bit
+   
+    if(mode==TRIANGLE)
+    {
         
-        ofTranslate(0, 0, meshDistance); // center the points a bit
-        
-//        if(mode==BILLBOARD)
-//        {
-            billboardShader.begin();
-            ofEnableAlphaBlending();
-            ofEnableBlendMode(OF_BLENDMODE_ADD);
-            ofEnablePointSprites();
-            texture.getTextureReference().bind();
-            mesh.draw();
-            
-            texture.getTextureReference().unbind();
-            ofDisablePointSprites();
-            
-            billboardShader.end();
-//
-//        }
-//        else if (mode == POINT){
-//            glPointSize(5);
-//            mesh.drawVertices();
-//        }
+        ofSetColor(255);
+        ofSetLineWidth(1);
         
         
-        ofPopMatrix();
+        triangulation.triangleMesh.drawWireframe();
+        triangulation.triangleMesh.drawVertices();
+
+    }
+    else
+    if(mode==POINT )
+    {
+        billboardShader.begin();
+        ofEnableAlphaBlending();
+        ofEnableBlendMode(OF_BLENDMODE_ADD);
+        ofEnablePointSprites();
+        texture.getTextureReference().bind();
+        mesh.draw();
+        
+        texture.getTextureReference().unbind();
+        ofDisablePointSprites();
+        
+        billboardShader.end();
+
     }
     else if (mode == SLITSCAN)
     {
         glPointSize(5);
-        ofPushMatrix();
-        // the projected points are 'upside down' and 'backwards'
-        ofScale(1, -1, -1);
-//        float s = 0.8;
-//        ofScale(s, s, s);
-        ofTranslate(0, 0, -1000); // center the points a bit
-        glEnable(GL_DEPTH_TEST);
         
-        scanMesh.drawVertices();
+        mesh.drawVertices();
         
-        glDisable(GL_DEPTH_TEST);
-        ofPopMatrix();
         
         
     }
-//        else if (mode ==DISPLACEMENT)
-//    {
-//        ofVboMesh mesh;
-//        
-//        mesh.setUsage( GL_DYNAMIC_DRAW );
-//        mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-//        
-//        int step = 2;
-//        for(int y = 0; y < h-step; y += step) {
-//            for(int x = 0; x < w-step; x += step) {
-//                float nwDis = kinect.getDistanceAt(x, y);
-//                float neDis = kinect.getDistanceAt(x+step, y);
-//                float swDis = kinect.getDistanceAt(x, y+step);
-//                float seDis = kinect.getDistanceAt(x+step, y+step);
-//                
-//                if( nwDis> minRange && nwDis < maxRange &&
-//                   neDis> minRange && neDis < maxRange &&
-//                   swDis> minRange && swDis < maxRange &&
-//                   seDis> minRange && seDis < maxRange )
-//                {
-//                    //                    mesh.addColor(kinect.getColorAt(x,y));
-//                    //                    mesh.addVertex();
-//                    ofVec3f nw = kinect.getWorldCoordinateAt(x, y);//ofVec3f( x, y , 0);
-//                    ofVec3f ne = kinect.getWorldCoordinateAt(x+step, y);//ofVec3f( x + step, y, 0);
-//                    ofVec3f sw = kinect.getWorldCoordinateAt(x, y+step);//ofVec3f( x, y + step, 0);
-//                    ofVec3f se =kinect.getWorldCoordinateAt(x+step, y+step) ;//ofVec3f( x + step, y + step, 0);
-//                    
-//                    addFace(mesh, nw, ne, se, sw);
-//                }
-//            }
-//        }
-//        
-//        ofPushMatrix();
-//        ofScale(1, -1, -1);
-//        
-//        ofTranslate(0, 0, meshDistance); // center the points a bit
-//        kinect.getTextureReference().bind();
-//        mesh.draw();
-//        kinect.getTextureReference().unbind();
-//        //        mesh.drawWireframe();
-//        //        mesh.drawVertices();
-//        
-//        
-//        ofPopMatrix();
-//        
-//    }
+    else if (mode ==DISPLACEMENT)
+    {
+        
+        
+        
+        kinect.getTextureReference().bind();
+        mesh.draw();
+        kinect.getTextureReference().unbind();
+        
+    }
     
-    
+    ofPopMatrix();
     
     
     
     
 }
+void testApp::fireStrip(float x ,float y, float vx, float vy)
+{
+    int ran = ofRandom(1,3);
+    
+    for(int j = 0 ; j < ran ; j++)
+    {
+        count++;
+        
+        count%=NUM_STRIP;
+        sin(ofRandomf()*TWO_PI)*50;
+        pos[count].set(x+sin(ofRandomf()*TWO_PI)*ofRandom(-50,50), y+cos(ofRandomf()*TWO_PI)*ofRandom(-50,50));
+        vec[count].set(vx,vy,0);
+        vec[count]*=2;
+        acc[count].set((x-pos[count].x)*0.01, (y-pos[count].y)*0.01);
+        age[count] = 1;
+        
+        for (int i=0; i<LOC_LENGTH; i++)
+        {
+            int index = i+(count*LOC_LENGTH);
+            loc[index].set(pos[count]);
+            int index2 = (i*2)+(count*LENGTH);
+            strip[(index2)]=loc[index];
+            
+            strip[(index2+1)]=loc[index];
+            
+            
+        }
+
+        
+        
+    }
+}
 void testApp::exit() {
-    canon.endLiveView();
+    //    canon.endLiveView();
     
     gui1->saveSettings("GUI/GUI1_Settings.xml");
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
@@ -593,22 +730,29 @@ void testApp::setGUI1()
     gui1->addFPS();
 	gui1->addWidgetDown(new ofxUILabel("PANEL 1: BASICS", OFX_UI_FONT_MEDIUM));
     gui1->addToggle("ENABLE_OSC",&bOsc);
-    gui1->addSlider("MIN_RANGE", 0, 10000, &minRange, length-xInit, dim);
-    gui1->addSlider("MAX_RANGE", 0, 10000, &maxRange, length-xInit, dim);
+    gui1->addSlider("centerPoint_X",-10000,10000,&centerPoint.x,length-xInit, dim);
+    gui1->addSlider("centerPoint_Y",-10000,10000,&centerPoint.y,length-xInit, dim);
+    gui1->addSlider("centerPoint_Z",-10000,10000,&centerPoint.z,length-xInit, dim);
+    gui1->addSlider("pixelStep", 2, 5, pixelStep, length-xInit, dim);
+    gui1->addSlider("nearThreshold", 0, 10000, &nearThreshold, length-xInit, dim);
+    gui1->addSlider("farThreshold", 0, 10000, &farThreshold, length-xInit, dim);
     gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance, length-xInit, dim);
     gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance, length-xInit, dim);
-    gui1->addSlider("BILLBOARD_NORM",0, 100, &bbNormal, length-xInit, dim);
-    gui1->addToggle("DRAW_CANOM", &canonDraw);
+    gui1->addSlider("depthScale", 0, 1, &depthScale, length-xInit, dim);
+    gui1->addSlider("BILLBOARD_NORM",-100, 100, &bbNormal, length-xInit, dim);
+//    gui1->addToggle("DRAW_CANOM", &canonDraw);
     renderMode.push_back("POINT");
-        renderMode.push_back("SLITSCAN");
+    renderMode.push_back("DISPLACEMENT");
+    renderMode.push_back("TRIANGLE");
+    renderMode.push_back("SLITSCAN");
     gui1->addRadio("RENDER_MODE", renderMode);
     gui1->addSpacer(length-xInit, dim);
     gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
-//    gui1->addToggle("SLITSCAN",&doSlitScan);
-//    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
+    //    gui1->addToggle("SLITSCAN",&doSlitScan);
+    //    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
     gui1->addToggle("PAUSE", &doPause);
     gui1->addSlider("KINECT_ANGLE",-30,30,kinectAngle, length-xInit, dim);
-
+    
     gradientModeRadioOption.push_back("0: most recent");
     gradientModeRadioOption.push_back("1: left-right");
     gradientModeRadioOption.push_back("2: right-left");
@@ -620,17 +764,42 @@ void testApp::setGUI1()
     gradientModeRadioOption.push_back("8: random");
     gradientModeRadioOption.push_back("9: oldest");
     gui1->addRadio("GRADIENT_MODE", gradientModeRadioOption);
-
+    
+    
+    
     ofxUILabel * lable = new ofxUILabel("SHADER",OFX_UI_FONT_LARGE);
     gui1->addWidgetEastOf (lable,"PANEL 1: BASICS");
 	for (unsigned i = 0; i < post.size(); ++i)
     {
-
+        if(post[i]->getName()=="dof")
+        {
+            dofIndex = i;
+        }
+        
 		gui1->addWidgetPosition(new ofxUILabelToggle(post[i]->getName(), false, length-xInit),
-                               OFX_UI_WIDGET_POSITION_DOWN,
-                               OFX_UI_ALIGN_RIGHT,
-							   false);
+                                OFX_UI_WIDGET_POSITION_DOWN,
+                                OFX_UI_ALIGN_RIGHT,
+                                false);
 	}
+    gui1->addWidgetPosition(new ofxUISlider("DOF_FOCUS", 0,1,0.5, length-xInit,dim),
+                            OFX_UI_WIDGET_POSITION_DOWN,
+                            OFX_UI_ALIGN_RIGHT,
+                            false);
+
+    vector<string>logLevel;
+    logLevel.push_back("OF_LOG_VERBOSE");
+    logLevel.push_back("OF_LOG_NOTICE");
+    logLevel.push_back("OF_LOG_WARNING");
+    logLevel.push_back("OF_LOG_ERROR");
+    logLevel.push_back("OF_LOG_FATAL_ERROR");
+    logLevel.push_back("OF_LOG_SILENT");
+//    ofxUIRadio("LOG_LEVEL", logLevel);
+    
+    gui1->addWidgetPosition(new ofxUIRadio("LOG_LEVEL", logLevel, OFX_UI_ORIENTATION_VERTICAL, dim, dim),
+                            OFX_UI_WIDGET_POSITION_DOWN,
+                            OFX_UI_ALIGN_RIGHT,
+                            false);
+
     
 	ofAddListener(gui1->newGUIEvent,this,&testApp::guiEvent);
     gui1->setVisible(false);
@@ -640,24 +809,49 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 {
 	string name = e.widget->getName();
 	int kind = e.widget->getKind();
-	cout << "got event from: " << name << endl;
+	ofLogVerbose("guiEvent") << "got event from: " << name << endl;
+    if(name=="pixelStep")
+    {
+        pixelStep = ((ofxUISlider*)e.widget)->getScaledValue();
+    }
+    if(name == "DOF_FOCUS")
+    {
+//        ((shared_ptr<DofPass> )post[dofIndex])->setFocus(((ofxUISlider*)e.widget)->getScaledValue());
+    }
     if(kind == OFX_UI_WIDGET_TOGGLE)
     {
         for(int  i = 0; i < gradientModeRadioOption.size() ; i++)
         {
             if(name == gradientModeRadioOption[i])
             {
+                cout << i << "got event from: " << name << endl;
                 setGradientMode(i);
             }
         }
         
-            if(name =="POINT")
-            {
-                mode = POINT;
-            }else if(name == "SLITSCAN")
-            {
-                mode = SLITSCAN;
-            }
+        if(name == "OF_LOG_VERBOSE")ofSetLogLevel(OF_LOG_VERBOSE);
+        else if(name == "OF_LOG_NOTICE")ofSetLogLevel(OF_LOG_NOTICE);
+        else if(name == "OF_LOG_WARNING")ofSetLogLevel(OF_LOG_WARNING);
+        else if(name == "OF_LOG_ERROR")ofSetLogLevel(OF_LOG_ERROR);
+        else if(name == "OF_LOG_FATAL_ERROR")ofSetLogLevel(OF_LOG_FATAL_ERROR);
+        else if(name == "OF_LOG_SILENT")ofSetLogLevel(OF_LOG_SILENT);
+
+        
+        if(name =="POINT")
+        {
+            mode = POINT;
+            
+        }if(name =="DISPLACEMENT")
+        {
+            mode = DISPLACEMENT;
+            
+        }else if(name == "TRIANGLE")
+        {
+            mode = TRIANGLE;
+        }else if(name == "SLITSCAN")
+        {
+            mode = SLITSCAN;
+        }
     }
     else{
         for (unsigned i = 0; i < post.size(); ++i)
@@ -676,8 +870,12 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 void testApp::keyPressed(int key){
     switch(key)
     {
+        case 'r':
+            displacement.unload();
+            displacement.load("depth");
+            break;
         case 27:
-            canon.endLiveView();
+            //            canon.endLiveView();
             break;
         case ' ':
             
@@ -692,15 +890,15 @@ void testApp::keyPressed(int key){
         case 'p':
             mode = POINT;
             break;
-//        case 't':
-//            mode = TRIANGLE;
-//            break;
-//        case 'b':
-//            mode = BILLBOARD;
-//            break;
-//        case 'd':
-//            mode = DISPLACEMENT;
-//            break;
+            //        case 't':
+            //            mode = TRIANGLE;
+            //            break;
+            //        case 'b':
+            //            mode = BILLBOARD;
+            //            break;
+        case 'd':
+            mode = DISPLACEMENT;
+            break;
         case '\t':
             gui1->toggleVisible();
 			break;
@@ -721,7 +919,8 @@ void testApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
-    
+    fireStrip(x,y,0,0);
+
 }
 
 //--------------------------------------------------------------

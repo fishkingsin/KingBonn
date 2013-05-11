@@ -5,11 +5,16 @@
 #include "ofxKinect.h"
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
-//#include "ofxDelaunay.h"
+#include "ofxDelaunay.h"
 #include "ofxUI.h"
 #include "ofxPostProcessing.h"
-#include "Canon.h"
+#include "ofxDuration.h"
+//#include "Canon.h"
 //#define NUM_BILLBOARDS 10000
+#define NUM_STRIP 200
+#define LOC_LENGTH 10
+#define LENGTH LOC_LENGTH*2
+
 
 class testApp : public ofBaseApp{
     
@@ -30,47 +35,62 @@ public:
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
+    void fireStrip(float x ,float y, float vx, float vy);
     ofxKinect kinect;
-//    ofxDelaunay triangulation;
+
     float angle;
     ofEasyCam cam;
-//    ofMesh mesh;
+
     ofxOscReceiver receiver;
     ofxPostProcessing post;
     ofxUICanvas gui;
     
-//    ofLight light;
+
     ofVec3f orbit;
-    
-    
-    roxlu::Canon canon;
-    void onPictureTaken(roxlu::CanonPictureEvent& ev);
-    int timeTry;
     enum MODE
     {
         POINT,
         SLITSCAN,
-//        TRIANGLE,
-//        BILLBOARD,
-//        DISPLACEMENT,
+        TRIANGLE,
+
+        DISPLACEMENT,
     };
     MODE mode;
     ofxUICanvas *gui1;
     void setGUI1();
     void guiEvent(ofxUIEventArgs &e);
-    float minRange,maxRange,camDistance,meshDistance,bbNormal;
+    float nearThreshold,farThreshold,camDistance,meshDistance,bbNormal,depthScale;
     bool bOsc;
     
     ofShader billboardShader;
+    ofShader displacement;
     ofImage texture;
     ofDirectory dir;
     int numEntry;
     
-//    ofVboMesh particle;
-//    ofVec3f billboardVels[NUM_BILLBOARDS];
     vector<string>renderMode;
     vector<string>gradientModeRadioOption;
     bool doPause ;
-    bool canonDraw;
-    ofTexture live_texture;
+//    bool canonDraw;
+//    ofTexture live_texture;
+    ofMesh mesh;    // final mesh
+    
+    ofVbo vbo;
+    ofVec3f pos[NUM_STRIP];
+    ofVec3f acc[NUM_STRIP];
+    ofVec3f vec[NUM_STRIP];
+    float age[NUM_STRIP];
+    ofVec3f strip[NUM_STRIP*LENGTH];
+    ofVec3f loc[NUM_STRIP*LOC_LENGTH];
+	ofFloatColor color[NUM_STRIP*LENGTH];
+    int total;
+    int count;
+    ofVec3f attraction;
+    ofVec3f centerPoint;
+    ofxDelaunay triangulation;
+    ofxDuration duration;
+    void trackUpdated(ofxDurationEventArgs& args);
+	string ip;
+	int port;
+    int dofIndex;
 };
