@@ -1,47 +1,47 @@
 <Widget>
     <Kind>2</Kind>
     <Name>ENABLE_OSC</Name>
-    <Value>1</Value>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>KINECT_ANGLE</Name>
+    <Value>4.261363983</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>centerPoint_X</Name>
-    <Value>57.138671875</Value>
-</Widget>
-<Widget>
-    <Kind>4</Kind>
-    <Name>centerPoint_Y</Name>
-    <Value>66.218750000</Value>
-</Widget>
-<Widget>
-    <Kind>4</Kind>
-    <Name>centerPoint_Z</Name>
-    <Value>275.202148438</Value>
-</Widget>
-<Widget>
-    <Kind>4</Kind>
-    <Name>pixelStep</Name>
-    <Value>2.967741966</Value>
-</Widget>
-<Widget>
-    <Kind>4</Kind>
-    <Name>nearThreshold</Name>
     <Value>0.000000000</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
+    <Name>centerPoint_Y</Name>
+    <Value>-5.083984375</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>centerPoint_Z</Name>
+    <Value>625.000000000</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>nearThreshold</Name>
+    <Value>224.358978271</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
     <Name>farThreshold</Name>
-    <Value>2852.564208984</Value>
+    <Value>1525.568237305</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>CAM_DISTANCE</Name>
-    <Value>4230.769042969</Value>
+    <Value>0.000000000</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>MESH_DISTANCE</Name>
-    <Value>-833.333007812</Value>
+    <Value>-681.818359375</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -51,17 +51,17 @@
 <Widget>
     <Kind>4</Kind>
     <Name>BILLBOARD_NORM</Name>
-    <Value>4.838706970</Value>
+    <Value>14.772727966</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>POINT</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>DISPLACEMENT</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -80,8 +80,8 @@
 </Widget>
 <Widget>
     <Kind>4</Kind>
-    <Name>KINECT_ANGLE</Name>
-    <Value>-1.693548203</Value>
+    <Name>KINECT_ALPHA</Name>
+    <Value>0.000000000</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -106,7 +106,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>4: bottom-top</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -121,7 +121,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>7: spherical</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -146,7 +146,22 @@
 <Widget>
     <Kind>17</Kind>
     <Name>dof</Name>
-    <Value>1</Value>
+    <Value>0</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>DOF_FOCUS</Name>
+    <Value>0.960000038</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>RGB_POS_X</Name>
+    <Value>680.727294922</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>RGB_POS_Y</Name>
+    <Value>516.338989258</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>

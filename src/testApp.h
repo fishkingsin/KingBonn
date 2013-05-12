@@ -42,6 +42,7 @@ public:
     ofEasyCam cam;
 
     ofxOscReceiver receiver;
+    ofxOscSender sender;
     ofxPostProcessing post;
     ofxUICanvas gui;
     
@@ -74,6 +75,7 @@ public:
 //    bool canonDraw;
 //    ofTexture live_texture;
     ofMesh mesh;    // final mesh
+    ofMesh scanMesh;
     
     ofVbo vbo;
     ofVec3f pos[NUM_STRIP];
@@ -92,5 +94,9 @@ public:
     void trackUpdated(ofxDurationEventArgs& args);
 	string ip;
 	int port;
-    int dofIndex;
+
+    float rgbAlpha;
+
+    ofVec2f rgbPos;
+    shared_ptr<DofPass> Ptr;
 };

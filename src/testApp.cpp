@@ -6,7 +6,7 @@ const float XtoZ = tanf(FovX / 2) * 2;
 const float YtoZ = tanf(FovY / 2) * 2;
 const unsigned int Xres = 640;
 const unsigned int Yres = 480;
-int pixelStep = 2;          // how many pixels to step through the depth map when iterating
+int pixelStep = 4;          // how many pixels to step through the depth map when iterating
 int numScanFrames = 240;    // duration (in frames) for full scan
 
 // physical boundaries of space time continuum
@@ -17,13 +17,10 @@ ofVec3f spaceBoundaryMax;
 ofVec3f spaceNumCells;
 
 
-bool doSaveMesh = false;
+bool doPause = false;
+bool doDrawPointCloud = true;
+bool doSlitScan = true;
 
-//bool doDrawPointCloud = true;
-//bool doSlitScan = true;
-//bool doDebugInfo = false;
-
-//bool usingKinect;   // using kinect or webcam
 
 int gradientMode = 0;
 string gradientModeStr = "";
@@ -31,7 +28,7 @@ string gradientModeStr = "";
 int kinectAngle;
 float inputWidth, inputHeight;
 
-msa::SpaceTime<ofMesh> spaceTime;   // space time continuum
+msa::SpaceTime<ofMesh> spaceTime;   // space time
 
 
 //--------------------------------------------------------------
@@ -112,9 +109,8 @@ ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
 }
 //--------------------------------------------------------------
 void testApp::setup(){
-    spaceBoundaryMin    = ofVec3f(-400, -400, 400);
-    spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
-//    ofSetLogLevel(OF_LOG_VERBOSE);
+
+    //    ofSetLogLevel(OF_LOG_VERBOSE);
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -135,12 +131,13 @@ void testApp::setup(){
     inputWidth = kinect.getWidth();
     inputHeight = kinect.getHeight();
     receiver.setup(7170);
-    
+    sender.setup("",7171);
     // Setup post-processing chain
     post.init(ofGetWidth(), ofGetHeight());
     post.createPass<FxaaPass>()->setEnabled(false);
     post.createPass<BloomPass>()->setEnabled(false);
-    post.createPass<DofPass>()->setEnabled(false);
+    Ptr = post.createPass<DofPass>();
+    Ptr->setEnabled(false);
     //    post.createPass<KaleidoscopePass>()->setEnabled(false);
     //    post.createPass<NoiseWarpPass>()->setEnabled(false);
     //    post.createPass<PixelatePass>()->setEnabled(false);
@@ -152,19 +149,20 @@ void testApp::setup(){
     nearThreshold = 0;
     farThreshold = 10000;
     setGUI1();
-    
+    spaceBoundaryMin    = ofVec3f(-400, -400, 400);
+    spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
     
 	// load the bilboard shader
 	// this is used to change the
 	// size of the particle
     displacement.load("depth");
     displacement.begin();
-//	displacement.setUniform1f("brightness", 1);
-//	displacement.setUniform1f("contrast", 1);
-//	displacement.setUniform1f("saturation", 0.5);
-//	displacement.setUniform1i("invert",false);
-//	displacement.setUniform1f("alpha", 1.0 );
-//	displacement.setUniform1i("tex", 0);
+    //	displacement.setUniform1f("brightness", 1);
+    //	displacement.setUniform1f("contrast", 1);
+    //	displacement.setUniform1f("saturation", 0.5);
+    //	displacement.setUniform1i("invert",false);
+    //	displacement.setUniform1f("alpha", 1.0 );
+    //	displacement.setUniform1i("tex", 0);
     //	shader.setUniformTexture("tex", fbo.getTextureReference(), 1);
 	displacement.end();
 	billboardShader.load("Billboard");
@@ -204,7 +202,7 @@ void testApp::setup(){
     vbo.setVertexData(strip, total, GL_DYNAMIC_DRAW);
 	vbo.setColorData(color, total, GL_DYNAMIC_DRAW);
     count = 0;
-
+    
     spaceTime.setMaxFrames(numScanFrames);
     setGradientMode(0);
     
@@ -226,6 +224,9 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
     }
     else if (args.track->name == "/CENTER_Z") {
         centerPoint.z = args.track->value;
+    }
+    else if (args.track->name == "/RGB_ALPHA") {
+        rgbAlpha = args.track->value;
     }
 }
 
@@ -300,106 +301,101 @@ void testApp::update(){
         // there is a new frame and we are connected
         if(kinect.isFrameNew())
         {
-            if(doPause == false) {
-                if(mode==SLITSCAN) {
-                    // construct space time continuum
-                    msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
-                    
-                    ofPixelsRef pixelsRef = kinect.getPixelsRef();// grabber->getPixelsRef();
-                    // iterate all vertices of mesh, and add to relevant quantum cells
-                    float maxZ = 9999;
-                    for(int j=0; j<inputHeight; j += pixelStep) {
-                        for(int i=0; i<inputWidth; i += pixelStep) {
-                            ofVec3f p;
-                            ofFloatColor c;
-                            bool doIt;
-                            
+            if(doSlitScan && mode == SLITSCAN) {
+                // construct space time continuum
+                msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
+                
+
+                // iterate all vertices of mesh, and add to relevant quantum cells
+                for(int j=0; j<inputHeight; j += pixelStep) {
+                    for(int i=0; i<inputWidth; i += pixelStep) {
+                        ofVec3f p;
+                        ofFloatColor c;
+                        bool doIt;
+
                             p = kinect.getWorldCoordinateAt(i, j);
                             c = kinect.getColorAt(i, j);
                             doIt = kinect.getDistanceAt(i, j) > 0;
-                            
-                            if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
-                                ofVec3f index = space->getIndexForPosition(p);
-                                ofMesh &cellMesh = space->getDataAtIndex(index);
-                                cellMesh.addVertex(p);
-                                cellMesh.addColor(c);
-                                if(maxZ<p.z)attraction = p;
-                            }
+                        if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
+                            ofVec3f index = space->getIndexForPosition(p);
+                            ofMesh &cellMesh = space->getDataAtIndex(index);
+                            cellMesh.addVertex(p);
+                            cellMesh.addColor(c);
                         }
                     }
-                    
-                    // add space to space time continuum
-                    spaceTime.addSpace(space);
-                    
-                    // update mesh
-                    mesh.clear();
-                    for(int i=0; i<spaceNumCells.x; i++) {
-                        for(int j=0; j<spaceNumCells.y; j++) {
-                            for(int k=0; k<spaceNumCells.z; k++) {
-                                float t;
-                                switch(gradientMode) {
-                                    case 0:
-                                        t = 0;  // use most recent mesh
-                                        break;
-                                        
-                                    case 1:
-                                        t = i * 1.0f/spaceNumCells.x; // left to right
-                                        break;
-                                        
-                                    case 2:
-                                        t = 1.0f - i * 1.0f/spaceNumCells.x; // right to left
-                                        break;
-                                        
-                                    case 3:
-                                        t = j * 1.0f/spaceNumCells.y; // up to down
-                                        break;
-                                        
-                                    case 4:
-                                        t = 1.0f - j * 1.0f/spaceNumCells.y; // down to up
-                                        break;
-                                        
-                                    case 5:
-                                        t = k * 1.0f/spaceNumCells.z; // front to back
-                                        break;
-                                        
-                                    case 6:
-                                        t = 1.0f - k * 1.0f/spaceNumCells.z; //  back to front
-                                        break;
-                                        
-                                    case 7:
-                                    {
-                                        // spherical
-                                        float tx = i/spaceNumCells.x * 2 - 1;
-                                        float ty = j/spaceNumCells.y * 2 - 1;
-                                        float tz = k/spaceNumCells.z * 2 - 1;
-                                        t = tx * tx + ty * ty + tz * tz;
-                                        //                                    t = sqrt(t);
-                                    }
-                                        break;
-                                        
-                                    case 8:
-                                        t = ofRandomuf();
-                                        break;
-                                        
-                                    case 9:
-                                        t = 1;
-                                        break;
-                                        
-                                }
-                                
-                                t = ofClamp(t, 0, 1);
-                                
-                                ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
-                                
-                                mesh.addVertices(cellMesh.getVertices());
-                                mesh.addColors(cellMesh.getColors());
-                                
-                                
-                            } // k
-                        } // j
-                    } // i
-                    
                 }
+                
+                // add space to space time continuum
+                spaceTime.addSpace(space);
+                
+                // update mesh
+                scanMesh.clear();
+                for(int i=0; i<spaceNumCells.x; i++) {
+                    for(int j=0; j<spaceNumCells.y; j++) {
+                        for(int k=0; k<spaceNumCells.z; k++) {
+                            float t;
+                            switch(gradientMode) {
+                                case 0:
+                                    t = 0;  // use most recent mesh
+                                    break;
+                                    
+                                case 1:
+                                    t = i * 1.0f/spaceNumCells.x; // left to right
+                                    break;
+                                    
+                                case 2:
+                                    t = 1.0f - i * 1.0f/spaceNumCells.x; // right to left
+                                    break;
+                                    
+                                case 3:
+                                    t = j * 1.0f/spaceNumCells.y; // up to down
+                                    break;
+                                    
+                                case 4:
+                                    t = 1.0f - j * 1.0f/spaceNumCells.y; // down to up
+                                    break;
+                                    
+                                case 5:
+                                    t = k * 1.0f/spaceNumCells.z; // front to back
+                                    break;
+                                    
+                                case 6:
+                                    t = 1.0f - k * 1.0f/spaceNumCells.z; //  back to front
+                                    break;
+                                    
+                                case 7:
+                                {
+                                    // spherical
+                                    float tx = i/spaceNumCells.x * 2 - 1;
+                                    float ty = j/spaceNumCells.y * 2 - 1;
+                                    float tz = k/spaceNumCells.z * 2 - 1;
+                                    t = tx * tx + ty * ty + tz * tz;
+                                    //                                    t = sqrt(t);
+                                }
+                                    break;
+                                    
+                                case 8:
+                                    t = ofRandomuf();
+                                    break;
+                                    
+                                case 9:
+                                    t = 1;
+                                    break;
+                                    
+                            }
+                            
+                            t = ofClamp(t, 0, 1);
+                            
+                            ofMesh &cellMesh = spaceTime.getSpaceAtTime(t)->getDataAtIndex(i, j, k);
+                            
+                            scanMesh.addVertices(cellMesh.getVertices());
+                            scanMesh.addColors(cellMesh.getColors());
+                            
+
+                        } // k
+                    } // j
+                } // i
+                
             }
             if (mode==DISPLACEMENT)
             {
@@ -427,7 +423,7 @@ void testApp::update(){
                         
                         if(nwz > 0 && nez > 0 && sez > 0 && swz > 0 && nwz>nearThreshold && nwz<
                            farThreshold) {
-
+                            
                             // ignore empty depth pixels
                             // get real world locations for each corner
                             ofVec3f nwv = ConvertProjectiveToRealWorld(x + 0, y + 0, nwz);
@@ -478,7 +474,7 @@ void testApp::update(){
                             
                             ofVec3f cur = kinect.getWorldCoordinateAt(x, y);
                             if(maxZ<cur.z)attraction = cur;
-                                
+                            
                             triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
                             
                         }
@@ -523,9 +519,9 @@ void testApp::update(){
             
             // check for mouse moved message
             if(m.getAddress() == "/orbit"){
-                orbit.x = m.getArgAsInt32(0);
-                orbit.y = m.getArgAsInt32(1);
-                orbit.z = m.getArgAsInt32(2);
+//                orbit.x += (m.getArgAsInt32(0)-orbit.x)*0.1f;
+                orbit.y += (m.getArgAsInt32(1)-orbit.y)*0.1f;
+//                orbit.z += (m.getArgAsInt32(2)-orbit.z)*0.1f;
             }
             else if(m.getAddress() == "/mode"){
                 int _mode = m.getArgAsInt32(0);
@@ -540,29 +536,64 @@ void testApp::update(){
                     case 2:
                         mode = SLITSCAN;
                         break;
+                    case 3:
+                        mode = TRIANGLE;
+                        break;
                     default:
                         mode = POINT;
                         break;
                         
                 }
+                ofxUIRadio* radio = (ofxUIRadio*)gui1->getWidget("RENDER_MODE");
+                vector<ofxUIToggle*> toggles = radio->getToggles();
+                for(int i = 0 ; i < toggles.size() ; i++)
+                {
+                    if(mode == i)
+                    {
+                        toggles[i]->setValue(true);
+                    }
+                    else{
+                        toggles[i]->setValue(false);
+                    }
+                }
             }
             else if(m.getAddress() == "/slitscan"){
-                int _mode = m.getArgAsInt32(0);
-                setGradientMode(_mode);
+                string _mode = m.getArgAsString(0);
+                for(int  i = 0; i < gradientModeRadioOption.size() ; i++)
+                {
+                    if(_mode == gradientModeRadioOption[i])
+                    {
+                        ofxUIRadio* radio = (ofxUIRadio*)gui1->getWidget("GRADIENT_MODE");
+                        vector<ofxUIToggle*> toggles = radio->getToggles();
+                        for(int j = 0 ; j < toggles.size() ; j++)
+                        {
+                            if(j == i)
+                            {
+                                toggles[j]->setValue(true);
+                            }
+                            else{
+                                toggles[j]->setValue(false);
+                            }
+                        }
+                        setGradientMode(i);
+                    }
+                }
+                
+                
             }
             else if(m.getAddress() == "/mouse"){
                 float x = m.getArgAsFloat(0)*ofGetWidth();
                 float y = m.getArgAsFloat(1)*ofGetHeight();
                 float vx = m.getArgAsFloat(2);
                 float vy = m.getArgAsFloat(3);
-
+                
                 fireStrip( x , y,  vx, vy);
-
+                
             }
         }
         cam.lookAt(ofVec3f(0,0,meshDistance));
         cam.setPosition(centerPoint);
-//        cam.orbit(0,0, camDistance,centerPoint);
+        //        cam.orbit(0,0, camDistance,centerPoint);
     }
     
 }
@@ -572,17 +603,44 @@ void testApp::draw(){
     
     ofBackground(0);
     
-
+    
     glPushAttrib(GL_ENABLE_BIT);
     
     // setup gl state
     glEnable(GL_DEPTH_TEST);
     
     post.begin(cam);
-
+    
     if(kinect.isConnected())
     {
         drawPointCloud();
+    }
+    
+    post.end();
+    
+    glPopAttrib();
+    
+    
+    glDisable(GL_DEPTH_TEST);
+    ofPushStyle();
+    ofSetColor(0,0,0,rgbAlpha);
+    ofRect(0, 0, ofGetWidth(), ofGetHeight());
+    ofPopStyle();
+    if(rgbAlpha>0)
+    {
+        ofPushStyle();
+        ofSetColor(255, 255, 255,rgbAlpha);
+        
+        ofPushMatrix();
+        // the projected points are 'upside down' and 'backwards'
+        ofTranslate(rgbPos.x,rgbPos.y);
+        ofRotateX(orbit.x);
+        ofRotateY(orbit.y);
+        ofRotateZ(orbit.z);
+        
+        kinect.draw(-320,-240 , 640,480);
+        ofPopMatrix();
+        ofPopStyle();
     }
     vbo.bind();
 	vbo.updateVertexData(strip, total);
@@ -600,14 +658,10 @@ void testApp::draw(){
     
     
 	vbo.unbind();
-        post.end();
-    glPopAttrib();
-    
-    
-    glDisable(GL_DEPTH_TEST);
-
     if(ofGetLogLevel()==OF_LOG_VERBOSE)
     {
+        kinect.drawDepth(0, 0, 320,240);
+        kinect.draw(320, 0, 320, 240);
         duration.draw(0,0, ofGetWidth(), ofGetHeight());
     }
 }
@@ -616,13 +670,13 @@ void testApp::drawPointCloud() {
 	int h = 480;
     ofPushMatrix();
     // the projected points are 'upside down' and 'backwards'
-
+    
     ofRotateX(orbit.x);
     ofRotateY(orbit.y);
     ofRotateZ(orbit.z);
-        ofScale(1, -1, -1);
+    ofScale(1, -1, -1);
     ofTranslate(0, 0, meshDistance); // center the points a bit
-   
+    
     if(mode==TRIANGLE)
     {
         
@@ -632,43 +686,46 @@ void testApp::drawPointCloud() {
         
         triangulation.triangleMesh.drawWireframe();
         triangulation.triangleMesh.drawVertices();
-
+        
     }
     else
-    if(mode==POINT )
-    {
-        billboardShader.begin();
-        ofEnableAlphaBlending();
-        ofEnableBlendMode(OF_BLENDMODE_ADD);
-        ofEnablePointSprites();
-        texture.getTextureReference().bind();
-        mesh.draw();
-        
-        texture.getTextureReference().unbind();
-        ofDisablePointSprites();
-        
-        billboardShader.end();
+        if(mode==POINT )
+        {
+            billboardShader.begin();
+            ofEnableAlphaBlending();
+            ofEnableBlendMode(OF_BLENDMODE_ADD);
+            ofEnablePointSprites();
+            texture.getTextureReference().bind();
+            mesh.draw();
+            
+            texture.getTextureReference().unbind();
+            ofDisablePointSprites();
+            
+            billboardShader.end();
+            
+        }
+        else if (mode == SLITSCAN)
+        {
+            glPointSize(5);
+            
+            scanMesh.drawVertices();
+            
+            
+            
+        }
+        else if (mode ==DISPLACEMENT)
+        {
 
-    }
-    else if (mode == SLITSCAN)
-    {
-        glPointSize(5);
-        
-        mesh.drawVertices();
-        
-        
-        
-    }
-    else if (mode ==DISPLACEMENT)
-    {
-        
-        
-        
-        kinect.getTextureReference().bind();
-        mesh.draw();
-        kinect.getTextureReference().unbind();
-        
-    }
+            displacement.begin();
+            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+            displacement.setUniformTexture("tex", kinect.getTextureReference(), 1);
+            kinect.getTextureReference().bind();
+            mesh.draw();
+            kinect.getTextureReference().unbind();            
+            displacement.end();
+
+            
+        }
     
     ofPopMatrix();
     
@@ -703,7 +760,7 @@ void testApp::fireStrip(float x ,float y, float vx, float vy)
             
             
         }
-
+        
         
         
     }
@@ -716,10 +773,7 @@ void testApp::exit() {
 	kinect.close();
 }
 void testApp::setGUI1()
-{
-    
-	
-    float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
+{   float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
     float length = (ofGetWidth()*0.25)-xInit;
     int dim = 16;
     
@@ -730,29 +784,29 @@ void testApp::setGUI1()
     gui1->addFPS();
 	gui1->addWidgetDown(new ofxUILabel("PANEL 1: BASICS", OFX_UI_FONT_MEDIUM));
     gui1->addToggle("ENABLE_OSC",&bOsc);
+    gui1->addSlider("KINECT_ANGLE",-30.0,30.0,0.0,length-xInit, dim);
     gui1->addSlider("centerPoint_X",-10000,10000,&centerPoint.x,length-xInit, dim);
     gui1->addSlider("centerPoint_Y",-10000,10000,&centerPoint.y,length-xInit, dim);
     gui1->addSlider("centerPoint_Z",-10000,10000,&centerPoint.z,length-xInit, dim);
-    gui1->addSlider("pixelStep", 2, 5, pixelStep, length-xInit, dim);
     gui1->addSlider("nearThreshold", 0, 10000, &nearThreshold, length-xInit, dim);
-    gui1->addSlider("farThreshold", 0, 10000, &farThreshold, length-xInit, dim);
+    gui1->addSlider("farThreshold", 0, 3000, &farThreshold, length-xInit, dim);
     gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance, length-xInit, dim);
     gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance, length-xInit, dim);
     gui1->addSlider("depthScale", 0, 1, &depthScale, length-xInit, dim);
     gui1->addSlider("BILLBOARD_NORM",-100, 100, &bbNormal, length-xInit, dim);
-//    gui1->addToggle("DRAW_CANOM", &canonDraw);
+    //    gui1->addToggle("DRAW_CANOM", &canonDraw);
     renderMode.push_back("POINT");
     renderMode.push_back("DISPLACEMENT");
     renderMode.push_back("TRIANGLE");
     renderMode.push_back("SLITSCAN");
     gui1->addRadio("RENDER_MODE", renderMode);
-    gui1->addSpacer(length-xInit, dim);
+
     gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
     //    gui1->addToggle("SLITSCAN",&doSlitScan);
     //    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
     gui1->addToggle("PAUSE", &doPause);
-    gui1->addSlider("KINECT_ANGLE",-30,30,kinectAngle, length-xInit, dim);
-    
+
+    gui1->addSlider("KINECT_ALPHA",0,255,&rgbAlpha, length-xInit, dim);
     gradientModeRadioOption.push_back("0: most recent");
     gradientModeRadioOption.push_back("1: left-right");
     gradientModeRadioOption.push_back("2: right-left");
@@ -771,21 +825,25 @@ void testApp::setGUI1()
     gui1->addWidgetEastOf (lable,"PANEL 1: BASICS");
 	for (unsigned i = 0; i < post.size(); ++i)
     {
-        if(post[i]->getName()=="dof")
-        {
-            dofIndex = i;
-        }
         
 		gui1->addWidgetPosition(new ofxUILabelToggle(post[i]->getName(), false, length-xInit),
                                 OFX_UI_WIDGET_POSITION_DOWN,
                                 OFX_UI_ALIGN_RIGHT,
                                 false);
 	}
-    gui1->addWidgetPosition(new ofxUISlider("DOF_FOCUS", 0,1,0.5, length-xInit,dim),
+    gui1->addWidgetPosition(new ofxUISlider("DOF_FOCUS", -2.0,2.0,0.0, length-xInit,dim),
                             OFX_UI_WIDGET_POSITION_DOWN,
                             OFX_UI_ALIGN_RIGHT,
                             false);
-
+    gui1->addWidgetPosition(new ofxUISlider("RGB_POS_X", -1024,1024,&rgbPos.x, length-xInit,dim),
+                            OFX_UI_WIDGET_POSITION_DOWN,
+                            OFX_UI_ALIGN_RIGHT,
+                            false);
+    gui1->addWidgetPosition(new ofxUISlider("RGB_POS_Y", -1024,1024,&rgbPos.y, length-xInit,dim),
+                            OFX_UI_WIDGET_POSITION_DOWN,
+                            OFX_UI_ALIGN_RIGHT,
+                            false);
+    
     vector<string>logLevel;
     logLevel.push_back("OF_LOG_VERBOSE");
     logLevel.push_back("OF_LOG_NOTICE");
@@ -793,13 +851,13 @@ void testApp::setGUI1()
     logLevel.push_back("OF_LOG_ERROR");
     logLevel.push_back("OF_LOG_FATAL_ERROR");
     logLevel.push_back("OF_LOG_SILENT");
-//    ofxUIRadio("LOG_LEVEL", logLevel);
+    //    ofxUIRadio("LOG_LEVEL", logLevel);
     
     gui1->addWidgetPosition(new ofxUIRadio("LOG_LEVEL", logLevel, OFX_UI_ORIENTATION_VERTICAL, dim, dim),
                             OFX_UI_WIDGET_POSITION_DOWN,
                             OFX_UI_ALIGN_RIGHT,
                             false);
-
+    
     
 	ofAddListener(gui1->newGUIEvent,this,&testApp::guiEvent);
     gui1->setVisible(false);
@@ -810,15 +868,21 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 	string name = e.widget->getName();
 	int kind = e.widget->getKind();
 	ofLogVerbose("guiEvent") << "got event from: " << name << endl;
-    if(name=="pixelStep")
-    {
-        pixelStep = ((ofxUISlider*)e.widget)->getScaledValue();
-    }
+    
     if(name == "DOF_FOCUS")
     {
-//        ((shared_ptr<DofPass> )post[dofIndex])->setFocus(((ofxUISlider*)e.widget)->getScaledValue());
+        Ptr->setFocus(((ofxUISlider*)e.widget)->getScaledValue());
+        //        ((shared_ptr<DofPass> )post[dofIndex])->setFocus(((ofxUISlider*)e.widget)->getScaledValue());
     }
-    if(kind == OFX_UI_WIDGET_TOGGLE)
+    else if(name == "farThreshold")
+    {
+            spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);  
+    }
+    else if(name == "KINECT_ANGLE")
+    {
+        kinect.setCameraTiltAngle(((ofxUISlider*)e.widget)->getScaledValue());
+    }
+    else if(kind == OFX_UI_WIDGET_TOGGLE)
     {
         for(int  i = 0; i < gradientModeRadioOption.size() ; i++)
         {
@@ -835,7 +899,7 @@ void testApp::guiEvent(ofxUIEventArgs &e)
         else if(name == "OF_LOG_ERROR")ofSetLogLevel(OF_LOG_ERROR);
         else if(name == "OF_LOG_FATAL_ERROR")ofSetLogLevel(OF_LOG_FATAL_ERROR);
         else if(name == "OF_LOG_SILENT")ofSetLogLevel(OF_LOG_SILENT);
-
+        
         
         if(name =="POINT")
         {
@@ -870,6 +934,9 @@ void testApp::guiEvent(ofxUIEventArgs &e)
 void testApp::keyPressed(int key){
     switch(key)
     {
+        case 'f':
+            ofToggleFullscreen();
+            break;
         case 'r':
             displacement.unload();
             displacement.load("depth");
@@ -901,6 +968,13 @@ void testApp::keyPressed(int key){
             break;
         case '\t':
             gui1->toggleVisible();
+            if(gui1->isVisible())
+            {
+                ofShowCursor();
+            }
+            else{
+                ofHideCursor();
+            }
 			break;
             
         default:
@@ -919,8 +993,9 @@ void testApp::keyReleased(int key){
 
 //--------------------------------------------------------------
 void testApp::mouseMoved(int x, int y ){
-    fireStrip(x,y,0,0);
-
+    if(ofGetLogLevel()==OF_LOG_VERBOSE)
+        fireStrip(x,y,0,0);
+    
 }
 
 //--------------------------------------------------------------

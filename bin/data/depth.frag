@@ -1,7 +1,8 @@
 // volume explosion shader
 // simon green / nvidia 2012
 // http://developer.download.nvidia.com/assets/gamedev/files/gdc12/GDC2012_Mastering_DirectX11_with_Unity.pdf
-/*uniform float iGlobalTime;
+uniform sampler2DRect tex;
+uniform float iGlobalTime;
 uniform vec3 iResolution;
 uniform vec2 iMouse;
 // sorry, port from HLSL!
@@ -63,6 +64,21 @@ float fbm( vec3 p )
     p = m*p*2.02; f += 0.03125*abs(noise( p ));
     return f/0.9375;
 }
+// returns signed distance to nearest surface
+// displace is displacement from original surface (0, 1)
+float distanceFunc(float3 p, out float displace)
+{
+	//float d = length(p) - _SphereRadius;	// distance to sphere
+	float d = length(p) - 0.5;//(sin(iGlobalTime*0.25)+0.5);	// animated radius
+	
+	// offset distance with pyroclastic noise
+	//p = normalize(p) * _SphereRadius;	// project noise point to sphere surface
+	displace = fbm(p*_NoiseFreq + _NoiseAnim*iGlobalTime);
+	d += displace * _NoiseAmp;
+	
+	return d;
+}
+
 // color gradient
 // this should be in a 1D texture really
 float4 gradient(float x)
@@ -135,11 +151,11 @@ float4 volumeFunc(float3 p)
 	float d = distanceFunc(p, displace);
 	float4 c = shade(p, displace);
 	return c;
-}*/
+}
 
 
 void main(){
-
+    vec3 oriColor = texture2DRect(tex,gl_TexCoord[0].st).rgb;
     
-    gl_FragColor = gl_Color;
+    gl_FragColor = vec4(oriColor,1.0);
 }

@@ -31,11 +31,31 @@
             <min>-9999.000000000</min>
             <max>9999.000000000</max>
         </track>
+        <track>
+            <type>Curves</type>
+            <xmlFileName>curves_2_.xml</xmlFileName>
+            <trackName>curves_2</trackName>
+            <displayName>BLACK_MASK</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>1</receiveOSC>
+            <min>0.000000000</min>
+            <max>1.000000000</max>
+        </track>
+        <track>
+            <type>Curves</type>
+            <xmlFileName>curves_3_.xml</xmlFileName>
+            <trackName>curves_3</trackName>
+            <displayName>RGB_ALPHA</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>1</receiveOSC>
+            <min>0.000000000</min>
+            <max>1.000000000</max>
+        </track>
     </page>
 </tracks>
 <timelineSettings>
     <duration>00:03:00:000</duration>
-    <playhead>00:00:00:000</playhead>
+    <playhead>00:00:06:468</playhead>
     <inpoint>00:00:00:000</inpoint>
     <outpoint>00:03:00:000</outpoint>
     <loop>0</loop>
