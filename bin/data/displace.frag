@@ -6,7 +6,8 @@ varying vec2  TexCoord;
 const float _NoiseFreq = 4.0;
 const float _NoiseAmp = -0.5;
 const vec3 _NoiseAnim = vec3(0, -1, 0);
-uniform float iGlobalTime;
+uniform float iGlobalTimeX;
+uniform float iGlobalTimeY;
 varying float displace ;
 // color gradient
 // this should be in a 1D texture really
@@ -63,12 +64,15 @@ float fbm( vec3 p )
     p = m*p*2.02; f += 0.03125*abs(noise( p ));
     return f/0.9375;
 }
-
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 void main(void) {
-    vec4 oriColor = texture2D(colormap, TexCoord);
-    float displace = fbm(oriColor.rgb * _NoiseFreq + _NoiseAnim*iGlobalTime);
-//
-    vec4 c = gradient(displace);
+    vec4 oriColor = texture2D(colormap, vec2(fract(TexCoord.s+iGlobalTimeX),fract(TexCoord.t+iGlobalTimeY)));
+    
+    float displace = fbm(oriColor.rgb * _NoiseFreq + _NoiseAnim*iGlobalTimeX);
+//  
+    vec4 c = gradient(displace);    
 
     gl_FragColor = oriColor*c;
 }

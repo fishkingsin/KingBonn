@@ -158,7 +158,7 @@ void testApp::setup(){
     displacement.load("displace");
 
     ofDisableArbTex();
-    colormap.loadImage("bump.png");
+    colormap.loadImage("color.png");
     bumpmap.loadImage("bump.png");
     ofEnableArbTex();
     quadric = gluNewQuadric();
@@ -676,7 +676,8 @@ void testApp::draw(){
             displacement.setUniformTexture("colormap", colormap, 1);
             displacement.setUniformTexture("bumpmap", bumpmap, 2);
             displacement.setUniform1i("maxHeight",ofGetMouseX());
-            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+            displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()));
+        displacement.setUniform1f("iGlobalTimeY",ofSignedNoise(ofGetElapsedTimef()));
             ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
             ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
             ofRotate(-90,1,0,0);
@@ -749,7 +750,7 @@ void testApp::drawPointCloud() {
             displacement.setUniformTexture("colormap", colormap, 1);
             displacement.setUniformTexture("bumpmap", bumpmap, 2);
             displacement.setUniform1i("maxHeight",ofGetMouseX());
-            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+            displacement.setUniform1f("iGlobalTimeX",ofGetElapsedTimef());
             kinect.getTextureReference().bind();
             mesh.draw();
             kinect.getTextureReference().unbind();            
