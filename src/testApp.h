@@ -65,6 +65,7 @@ public:
     
     ofShader billboardShader;
     ofShader displacement;
+    ofImage colormap, bumpmap;
     ofImage texture;
     ofDirectory dir;
     int numEntry;

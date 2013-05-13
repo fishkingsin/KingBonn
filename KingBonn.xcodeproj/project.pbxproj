@@ -34,6 +34,8 @@
 		933a2227713c720ceff80fd967d0a8ee /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2b40eda85beb63e46785bc299a638898 /* tinyxml.cpp */; };
 		9d44dc88ef9e7991b4a09951e2e4769f /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 832bdc407620cdba568b713d2252c43c /* tinyxmlerror.cpp */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
+		E3CA336D174086DC00FEC9CC /* displace.frag in Sources */ = {isa = PBXBuildFile; fileRef = E3CA336B174086DC00FEC9CC /* displace.frag */; };
+		E3CA336E174086DC00FEC9CC /* displace.vert in Sources */ = {isa = PBXBuildFile; fileRef = E3CA336C174086DC00FEC9CC /* displace.vert */; };
 		E3E5FB6E173D5C250045A9BC /* depth.frag in Sources */ = {isa = PBXBuildFile; fileRef = E3E5FB6C173D5C250045A9BC /* depth.frag */; };
 		E3E5FB6F173D5C250045A9BC /* depth.vert in Sources */ = {isa = PBXBuildFile; fileRef = E3E5FB6D173D5C250045A9BC /* depth.vert */; };
 		E3F2F99C173ECCAF0088FD70 /* ofxDuration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3F2F996173ECCAF0088FD70 /* ofxDuration.cpp */; };
@@ -179,6 +181,8 @@
 		9f7986dc4eb05e75fce2c777500fdc01 /* ofxOscSender.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxOscSender.h; path = ../../../addons/ofxOsc/src/ofxOscSender.h; sourceTree = SOURCE_ROOT; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E3C8CA051739E903008A3AD7 /* MSASpaceTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSASpaceTime.h; sourceTree = "<group>"; };
+		E3CA336B174086DC00FEC9CC /* displace.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = displace.frag; path = bin/data/displace.frag; sourceTree = "<group>"; };
+		E3CA336C174086DC00FEC9CC /* displace.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = displace.vert; path = bin/data/displace.vert; sourceTree = "<group>"; };
 		E3E5FB6C173D5C250045A9BC /* depth.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = depth.frag; path = bin/data/depth.frag; sourceTree = "<group>"; };
 		E3E5FB6D173D5C250045A9BC /* depth.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = depth.vert; path = bin/data/depth.vert; sourceTree = "<group>"; };
 		E3F2F996173ECCAF0088FD70 /* ofxDuration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxDuration.cpp; sourceTree = "<group>"; };
@@ -534,6 +538,8 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				E3CA336B174086DC00FEC9CC /* displace.frag */,
+				E3CA336C174086DC00FEC9CC /* displace.vert */,
 				E3E5FB6C173D5C250045A9BC /* depth.frag */,
 				E3E5FB6D173D5C250045A9BC /* depth.vert */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
@@ -892,6 +898,8 @@
 				E3E5FB6E173D5C250045A9BC /* depth.frag in Sources */,
 				E3E5FB6F173D5C250045A9BC /* depth.vert in Sources */,
 				E3F2F99C173ECCAF0088FD70 /* ofxDuration.cpp in Sources */,
+				E3CA336D174086DC00FEC9CC /* displace.frag in Sources */,
+				E3CA336E174086DC00FEC9CC /* displace.vert in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

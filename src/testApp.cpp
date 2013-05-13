@@ -30,7 +30,7 @@ float inputWidth, inputHeight;
 
 msa::SpaceTime<ofMesh> spaceTime;   // space time
 
-
+GLUquadricObj *quadric;
 //--------------------------------------------------------------
 void setGradientMode(int g) {
     gradientMode = g;
@@ -110,7 +110,7 @@ ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
 //--------------------------------------------------------------
 void testApp::setup(){
 
-    //    ofSetLogLevel(OF_LOG_VERBOSE);
+    ofSetLogLevel(OF_LOG_VERBOSE);
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -155,7 +155,16 @@ void testApp::setup(){
 	// load the bilboard shader
 	// this is used to change the
 	// size of the particle
-    displacement.load("depth");
+    displacement.load("displace");
+
+    ofDisableArbTex();
+    colormap.loadImage("bump.png");
+    bumpmap.loadImage("bump.png");
+    ofEnableArbTex();
+    quadric = gluNewQuadric();
+    gluQuadricTexture(quadric, GL_TRUE);
+    gluQuadricNormals(quadric, GLU_SMOOTH);
+    
     displacement.begin();
     //	displacement.setUniform1f("brightness", 1);
     //	displacement.setUniform1f("contrast", 1);
@@ -660,8 +669,24 @@ void testApp::draw(){
 	vbo.unbind();
     if(ofGetLogLevel()==OF_LOG_VERBOSE)
     {
-        kinect.drawDepth(0, 0, 320,240);
-        kinect.draw(320, 0, 320, 240);
+        glEnable(GL_DEPTH_TEST);
+        displacement.begin();
+        displacement.setUniformTexture("colormap", colormap, 1);
+        displacement.setUniformTexture("bumpmap", bumpmap, 2);
+        displacement.setUniform1i("maxHeight",ofGetMouseX());
+        
+        ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+        ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
+        ofRotate(-90,1,0,0);
+        gluSphere(quadric, 150, 400, 400);
+        
+        displacement.end();
+                glDisable(GL_DEPTH_TEST);
+        if(kinect.isConnected())
+        {
+            kinect.drawDepth(0, 0, 320,240);
+            kinect.draw(320, 0, 320, 240);
+        }
         duration.draw(0,0, ofGetWidth(), ofGetHeight());
     }
 }
@@ -718,6 +743,10 @@ void testApp::drawPointCloud() {
 
             displacement.begin();
             displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+            displacement.setUniformTexture("colormap", colormap, 1);
+            displacement.setUniformTexture("bumpmap", bumpmap, 2);
+            displacement.setUniform1i("maxHeight",mouseX);
+            
             displacement.setUniformTexture("tex", kinect.getTextureReference(), 1);
             kinect.getTextureReference().bind();
             mesh.draw();
