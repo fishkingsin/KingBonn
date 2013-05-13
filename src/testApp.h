@@ -60,7 +60,7 @@ public:
     ofxUICanvas *gui1;
     void setGUI1();
     void guiEvent(ofxUIEventArgs &e);
-    float nearThreshold,farThreshold,camDistance,meshDistance,bbNormal,depthScale;
+    float nearThreshold,farThreshold,camDistance,meshDistance,bbNormal,depthScale,maxHeight;
     bool bOsc;
     
     ofShader billboardShader;

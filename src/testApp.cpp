@@ -109,8 +109,12 @@ ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
 }
 //--------------------------------------------------------------
 void testApp::setup(){
-
+    
     ofSetLogLevel(OF_LOG_VERBOSE);
+    // load the bilboard shader
+	// this is used to change the
+	// size of the particle
+    displacement.load("simplicity");
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -152,11 +156,8 @@ void testApp::setup(){
     spaceBoundaryMin    = ofVec3f(-400, -400, 400);
     spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
     
-	// load the bilboard shader
-	// this is used to change the
-	// size of the particle
-    displacement.load("displace");
-
+	
+    
     ofDisableArbTex();
     colormap.loadImage("color.png");
     bumpmap.loadImage("bump.png");
@@ -314,17 +315,17 @@ void testApp::update(){
                 // construct space time continuum
                 msa::SpaceT<ofMesh> *space = new msa::SpaceT<ofMesh>(spaceNumCells, spaceBoundaryMin, spaceBoundaryMax);
                 
-
+                
                 // iterate all vertices of mesh, and add to relevant quantum cells
                 for(int j=0; j<inputHeight; j += pixelStep) {
                     for(int i=0; i<inputWidth; i += pixelStep) {
                         ofVec3f p;
                         ofFloatColor c;
                         bool doIt;
-
-                            p = kinect.getWorldCoordinateAt(i, j);
-                            c = kinect.getColorAt(i, j);
-                            doIt = kinect.getDistanceAt(i, j) > 0;
+                        
+                        p = kinect.getWorldCoordinateAt(i, j);
+                        c = kinect.getColorAt(i, j);
+                        doIt = kinect.getDistanceAt(i, j) > 0;
                         if(ofInRange(p.z, nearThreshold, farThreshold) && doIt) {
                             ofVec3f index = space->getIndexForPosition(p);
                             ofMesh &cellMesh = space->getDataAtIndex(index);
@@ -400,13 +401,13 @@ void testApp::update(){
                             scanMesh.addVertices(cellMesh.getVertices());
                             scanMesh.addColors(cellMesh.getColors());
                             
-
+                            
                         } // k
                     } // j
                 } // i
                 
             }
-            if (mode==DISPLACEMENT)
+            if (mode == DISPLACEMENT)
             {
                 
                 int width = kinect.getWidth();
@@ -528,9 +529,9 @@ void testApp::update(){
             
             // check for mouse moved message
             if(m.getAddress() == "/orbit"){
-//                orbit.x += (m.getArgAsInt32(0)-orbit.x)*0.1f;
+                //                orbit.x += (m.getArgAsInt32(0)-orbit.x)*0.1f;
                 orbit.y += (m.getArgAsInt32(1)-orbit.y)*0.1f;
-//                orbit.z += (m.getArgAsInt32(2)-orbit.z)*0.1f;
+                //                orbit.z += (m.getArgAsInt32(2)-orbit.z)*0.1f;
             }
             else if(m.getAddress() == "/mode"){
                 int _mode = m.getArgAsInt32(0);
@@ -669,19 +670,23 @@ void testApp::draw(){
 	vbo.unbind();
     if(ofGetLogLevel()==OF_LOG_VERBOSE)
     {
+        
         glEnable(GL_DEPTH_TEST);
         
         displacement.begin();
         ofPushMatrix();
-            displacement.setUniformTexture("colormap", colormap, 1);
-            displacement.setUniformTexture("bumpmap", bumpmap, 2);
-            displacement.setUniform1i("maxHeight",ofGetMouseX());
-            displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()));
+        displacement.setUniformTexture("colormap", colormap, 1);
+        displacement.setUniformTexture("bumpmap", bumpmap, 2);
+        displacement.setUniform1i("maxHeight",ofGetMouseX());
+        displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+        displacement.setUniform3f("iResolution",ofGetWidth(),ofGetHeight(),0);
+        
+        displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()));
         displacement.setUniform1f("iGlobalTimeY",ofSignedNoise(ofGetElapsedTimef()));
-            ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
-            ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
-            ofRotate(-90,1,0,0);
-            gluSphere(quadric, 150, 400, 400);
+        ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+        ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
+        ofRotate(-90,1,0,0);
+        gluSphere(quadric, 150, 400, 400);
         ofPopMatrix();
         displacement.end();
         
@@ -743,19 +748,20 @@ void testApp::drawPointCloud() {
             
             
         }
-        else if (mode ==DISPLACEMENT)
+        else if (mode == DISPLACEMENT)
         {
-
+            
             displacement.begin();
             displacement.setUniformTexture("colormap", colormap, 1);
             displacement.setUniformTexture("bumpmap", bumpmap, 2);
-            displacement.setUniform1i("maxHeight",ofGetMouseX());
+            displacement.setUniform1i("maxHeight",maxHeight);
             displacement.setUniform1f("iGlobalTimeX",ofGetElapsedTimef());
-            kinect.getTextureReference().bind();
+            displacement.setUniform1f("iGlobalTimeY",ofSignedNoise(ofGetElapsedTimef()));
+            //            kinect.getTextureReference().bind();
             mesh.draw();
-            kinect.getTextureReference().unbind();            
+            //            kinect.getTextureReference().unbind();
             displacement.end();
-
+            
             
         }
     
@@ -832,12 +838,12 @@ void testApp::setGUI1()
     renderMode.push_back("TRIANGLE");
     renderMode.push_back("SLITSCAN");
     gui1->addRadio("RENDER_MODE", renderMode);
-
+    gui1->addSlider("maxHeight", -100,100, &maxHeight);
     gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
     //    gui1->addToggle("SLITSCAN",&doSlitScan);
     //    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
     gui1->addToggle("PAUSE", &doPause);
-
+    
     gui1->addSlider("KINECT_ALPHA",0,255,&rgbAlpha, length-xInit, dim);
     gradientModeRadioOption.push_back("0: most recent");
     gradientModeRadioOption.push_back("1: left-right");
@@ -908,7 +914,7 @@ void testApp::guiEvent(ofxUIEventArgs &e)
     }
     else if(name == "farThreshold")
     {
-            spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);  
+        spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
     }
     else if(name == "KINECT_ANGLE")
     {
@@ -937,7 +943,7 @@ void testApp::guiEvent(ofxUIEventArgs &e)
         {
             mode = POINT;
             
-        }if(name =="DISPLACEMENT")
+        }if(name == "DISPLACEMENT")
         {
             mode = DISPLACEMENT;
             
@@ -971,7 +977,7 @@ void testApp::keyPressed(int key){
             break;
         case 'r':
             displacement.unload();
-            displacement.load("depth");
+            displacement.load("simplicity");
             break;
         case 27:
             //            canon.endLiveView();
