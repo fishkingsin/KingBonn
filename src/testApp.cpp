@@ -670,18 +670,22 @@ void testApp::draw(){
     if(ofGetLogLevel()==OF_LOG_VERBOSE)
     {
         glEnable(GL_DEPTH_TEST);
+        
         displacement.begin();
-        displacement.setUniformTexture("colormap", colormap, 1);
-        displacement.setUniformTexture("bumpmap", bumpmap, 2);
-        displacement.setUniform1i("maxHeight",ofGetMouseX());
-        
-        ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
-        ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
-        ofRotate(-90,1,0,0);
-        gluSphere(quadric, 150, 400, 400);
-        
+        ofPushMatrix();
+            displacement.setUniformTexture("colormap", colormap, 1);
+            displacement.setUniformTexture("bumpmap", bumpmap, 2);
+            displacement.setUniform1i("maxHeight",ofGetMouseX());
+            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
+            ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+            ofRotateY(360*sinf(float(ofGetFrameNum())/500.0f));
+            ofRotate(-90,1,0,0);
+            gluSphere(quadric, 150, 400, 400);
+        ofPopMatrix();
         displacement.end();
-                glDisable(GL_DEPTH_TEST);
+        
+        
+        glDisable(GL_DEPTH_TEST);
         if(kinect.isConnected())
         {
             kinect.drawDepth(0, 0, 320,240);
@@ -742,12 +746,10 @@ void testApp::drawPointCloud() {
         {
 
             displacement.begin();
-            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
             displacement.setUniformTexture("colormap", colormap, 1);
             displacement.setUniformTexture("bumpmap", bumpmap, 2);
-            displacement.setUniform1i("maxHeight",mouseX);
-            
-            displacement.setUniformTexture("tex", kinect.getTextureReference(), 1);
+            displacement.setUniform1i("maxHeight",ofGetMouseX());
+            displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
             kinect.getTextureReference().bind();
             mesh.draw();
             kinect.getTextureReference().unbind();            

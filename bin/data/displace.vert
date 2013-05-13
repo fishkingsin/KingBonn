@@ -2,7 +2,7 @@ uniform sampler2D colormap;
 uniform sampler2D bumpmap;
 varying vec2  TexCoord;
 uniform int maxHeight;
-
+//varying float displace ;
 void main(void) {
     TexCoord = gl_MultiTexCoord0.st;
     
