@@ -3,43 +3,13 @@
         <name>Page One</name>
         <track>
             <type>Curves</type>
-            <xmlFileName>curves_.xml</xmlFileName>
-            <trackName>curves</trackName>
-            <displayName>CENTER_X</displayName>
-            <sendOSC>1</sendOSC>
-            <receiveOSC>1</receiveOSC>
-            <min>-9999.000000000</min>
-            <max>9999.000000000</max>
-        </track>
-        <track>
-            <type>Curves</type>
-            <xmlFileName>curves_0_.xml</xmlFileName>
-            <trackName>curves_0</trackName>
-            <displayName>CENTER_Y</displayName>
-            <sendOSC>1</sendOSC>
-            <receiveOSC>1</receiveOSC>
-            <min>-9999.000000000</min>
-            <max>9999.000000000</max>
-        </track>
-        <track>
-            <type>Curves</type>
             <xmlFileName>curves_1_.xml</xmlFileName>
             <trackName>curves_1</trackName>
             <displayName>CENTER_Z</displayName>
             <sendOSC>1</sendOSC>
             <receiveOSC>1</receiveOSC>
-            <min>-9999.000000000</min>
-            <max>9999.000000000</max>
-        </track>
-        <track>
-            <type>Curves</type>
-            <xmlFileName>curves_2_.xml</xmlFileName>
-            <trackName>curves_2</trackName>
-            <displayName>BLACK_MASK</displayName>
-            <sendOSC>1</sendOSC>
-            <receiveOSC>1</receiveOSC>
-            <min>0.000000000</min>
-            <max>1.000000000</max>
+            <min>-1000.000000000</min>
+            <max>1000.000000000</max>
         </track>
         <track>
             <type>Curves</type>
@@ -51,11 +21,58 @@
             <min>0.000000000</min>
             <max>1.000000000</max>
         </track>
+        <track>
+            <type>Colors</type>
+            <xmlFileName>colors_.xml</xmlFileName>
+            <trackName>colors</trackName>
+            <displayName>PARTICLE_COLOR</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>0</receiveOSC>
+            <palette>defaultColorPalette.png</palette>
+        </track>
+        <track>
+            <type>Flags</type>
+            <xmlFileName>flags_.xml</xmlFileName>
+            <trackName>flags</trackName>
+            <displayName>mode</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>0</receiveOSC>
+        </track>
+        <track>
+            <type>Curves</type>
+            <xmlFileName>curves_.xml</xmlFileName>
+            <trackName>curves</trackName>
+            <displayName>DIRECTION_X</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>1</receiveOSC>
+            <min>-1.000000000</min>
+            <max>1.000000000</max>
+        </track>
+        <track>
+            <type>Curves</type>
+            <xmlFileName>curves_0_.xml</xmlFileName>
+            <trackName>curves_0</trackName>
+            <displayName>DIRECTION_Y</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>1</receiveOSC>
+            <min>-1.000000000</min>
+            <max>1.000000000</max>
+        </track>
+        <track>
+            <type>Curves</type>
+            <xmlFileName>curves_2_.xml</xmlFileName>
+            <trackName>curves_2</trackName>
+            <displayName>MASK</displayName>
+            <sendOSC>1</sendOSC>
+            <receiveOSC>1</receiveOSC>
+            <min>0.000000000</min>
+            <max>1.000000000</max>
+        </track>
     </page>
 </tracks>
 <timelineSettings>
     <duration>00:03:00:000</duration>
-    <playhead>00:00:06:468</playhead>
+    <playhead>00:00:11:953</playhead>
     <inpoint>00:00:00:000</inpoint>
     <outpoint>00:03:00:000</outpoint>
     <loop>0</loop>

@@ -1,0 +1,22 @@
+<keyframes>
+    <key>
+        <flag>DISPLACEMENT</flag>
+        <time>00:00:08:578</time>
+        <value>0.475000024</value>
+    </key>
+    <key>
+        <flag>POINT</flag>
+        <time>00:00:27:703</time>
+        <value>0.600000024</value>
+    </key>
+    <key>
+        <flag>TRIANGLE</flag>
+        <time>00:00:44:156</time>
+        <value>0.375000000</value>
+    </key>
+    <key>
+        <flag>SCAN</flag>
+        <time>00:01:03:281</time>
+        <value>0.475000024</value>
+    </key>
+</keyframes>

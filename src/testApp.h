@@ -99,11 +99,13 @@ public:
 	string ip;
 	int port;
 
-    float rgbAlpha;
+    float rgbAlpha,maskAlpha;
 
     ofVec2f rgbPos;
     shared_ptr<DofPass> Ptr;
     
     //skybox;
     ofxSkyBox        skybox;
+    float particleSize,aging,patricleNoise;
+    ofVec2f particelDirection;
 };

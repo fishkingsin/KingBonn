@@ -109,7 +109,7 @@ ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
 }
 //--------------------------------------------------------------
 void testApp::setup(){
-    skybox.load();
+//    skybox.load();
     
     ofSetLogLevel(OF_LOG_VERBOSE);
     // load the bilboard shader
@@ -213,6 +213,8 @@ void testApp::setup(){
         
         
     }
+    particleSize = 1;
+    aging = 0.02;
     total = NUM_STRIP*LENGTH;
     vbo.setVertexData(strip, total, GL_DYNAMIC_DRAW);
 	vbo.setColorData(color, total, GL_DYNAMIC_DRAW);
@@ -243,6 +245,50 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
     else if (args.track->name == "/RGB_ALPHA") {
         rgbAlpha = args.track->value;
     }
+    else if (args.track->name == "/MASK")
+    {
+        maskAlpha = args.track->value;
+    }
+    else if (args.track->name == "/AGING")
+    {
+        aging = args.track->value;
+    }
+    else if (args.track->name == "/DIRECTION_X")
+    {
+        particelDirection.x = args.track->value;
+    }
+    else if (args.track->name == "/DIRECTION_Y")
+    {
+        particelDirection.y = args.track->value;
+    }
+    else if (args.track->name == "/PARTICLE_SZIE")
+    {
+        particleSize = args.track->value;
+    }
+    else if (args.track->name == "/PARTICLE_SZIE")
+    {
+        particleSize = args.track->value;
+    }
+    else if (args.track->name == "/PARTICLE_NOISE")
+    {
+        patricleNoise = args.track->value;
+    }
+    else if (args.track->name == "/PARTICLE_COLOR")
+    {
+        float c = args.track->color.getHue();
+        ofLogVerbose() << args.track->name << " "<< c;
+        for (int j=0; j<NUM_STRIP; j++)
+        {
+            float h = ofRandom(c-50,c+50);
+            for (int i=0; i<LENGTH; i++)
+            {
+                int index = i+(j*LENGTH);
+                float brightness = sinf(PI*float((i*0.5)*1.f/LENGTH*0.5f))*255;
+                color[index].set(ofColor::fromHsb(h,255, 255,brightness));
+            }
+        }
+
+    }
     else if (args.track->name == "/mode")
     {
         string flag = args.track->flag;
@@ -267,11 +313,36 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
         }
         
     }
+    else if (args.track->name == "/SLITSCAN") {
+        int scanmode = atoi(args.track->flag.c_str());
+        ofxUIRadio* radio = (ofxUIRadio*)gui1->getWidget("GRADIENT_MODE");
+        vector<ofxUIToggle*> toggles = radio->getToggles();
+        for(int j = 0 ; j < toggles.size() ; j++)
+        {
+            if(j == scanmode)
+            {
+                toggles[j]->setValue(true);
+            }
+            else{
+                toggles[j]->setValue(false);
+            }
+        }
+        setGradientMode(scanmode);
+    }
     
 }
 
 //--------------------------------------------------------------
 void testApp::update(){
+
+//    if(bFade)
+//    {
+//        if(rgbAlpha>0)
+//        rgbAlpha--;
+//    }else{
+//        if(rgbAlpha<255)
+//            rgbAlpha++;
+//    }
     float t = (ofGetElapsedTimef()) * 0.9f;
     float div = 250.0;
     
@@ -282,8 +353,9 @@ void testApp::update(){
             ofVec3f _vec(ofSignedNoise(t, pos[j].y/div, pos[j].z/div),
                          ofSignedNoise(pos[j].x/div, t, pos[j].z/div),
                          ofSignedNoise(pos[j].x/div, pos[j].y/div,t));
-            _vec *=  ofGetLastFrameTime()*50;
+            _vec *=  ofGetLastFrameTime()*patricleNoise;
             vec[j]+=_vec;
+            vec[j]+=particelDirection;
             //            acc[j] = (attraction-acc[j])*0.1;
             vec[j]+=acc[j];
             vec[j]*=0.9;
@@ -306,9 +378,9 @@ void testApp::update(){
                     ofVec3f perp1 = perp0.getCrossed( ofVec3f( 0, 1, 0 ) ).getNormalized();
                     ofVec3f perp2 = perp0.getCrossed( perp1 ).getNormalized();
                     perp1 = perp0.getCrossed( perp2 ).getNormalized();
-                    Off.x        = perp1.x * radius*age[j];
-                    Off.y       = perp1.y * radius*age[j];
-                    Off.z        = perp1.z * radius*age[j];
+                    Off.x        = perp1.x * radius*age[j]*particleSize;
+                    Off.y       = perp1.y * radius*age[j]*particleSize;
+                    Off.z        = perp1.z * radius*age[j]*particleSize;
                     
                     strip[(index2)]=loc[index]-Off;
                     
@@ -317,7 +389,7 @@ void testApp::update(){
             }
             loc[j*LOC_LENGTH] = pos[j];
             pos[j]+=vec[j];
-            age[j]-=0.02;
+            age[j]-=aging;
         }
         else
         {
@@ -643,7 +715,7 @@ void testApp::update(){
 //--------------------------------------------------------------
 void testApp::draw(){
     
-    ofBackground(255);
+    ofBackground(0);
 
 
     glPushAttrib(GL_ENABLE_BIT);
@@ -653,16 +725,16 @@ void testApp::draw(){
 
     post.begin(cam);
     //draw skybox
-    {
-        glEnable(GL_CULL_FACE);
-        glPushMatrix();
-        glRotatef(180, 0, 0, 1);
-        glScalef(50, 50, 50);
-
-        skybox.draw();
-        glPopMatrix();
-        glDisable(GL_CULL_FACE);
-    }
+//    {
+//        glEnable(GL_CULL_FACE);
+//        glPushMatrix();
+//        glRotatef(180, 0, 0, 1);
+//        glScalef(50, 50, 50);
+//
+//        skybox.draw();
+//        glPopMatrix();
+//        glDisable(GL_CULL_FACE);
+//    }
 
     if(kinect.isConnected())
     {
@@ -676,7 +748,8 @@ void testApp::draw(){
 
     glDisable(GL_DEPTH_TEST);
     ofPushStyle();
-    ofSetColor(0,0,0,rgbAlpha);
+    ofFill();
+    ofSetColor(0,0,0,maskAlpha);
     ofRect(0, 0, ofGetWidth(), ofGetHeight());
     ofPopStyle();
     if(rgbAlpha>0)
@@ -690,8 +763,8 @@ void testApp::draw(){
         ofRotateX(orbit.x);
         ofRotateY(orbit.y);
         ofRotateZ(orbit.z);
-
-        kinect.draw(-320,-240 , 640,480);
+//        ofScale(1.5,1.5);
+        kinect.draw(-720,-540 , 1440,1080);
         ofPopMatrix();
         ofPopStyle();
     }
@@ -873,7 +946,7 @@ void testApp::setGUI1()
     gui1->addSlider("centerPoint_Y",-10000,10000,&centerPoint.y,length-xInit, dim);
     gui1->addSlider("centerPoint_Z",-10000,10000,&centerPoint.z,length-xInit, dim);
     gui1->addSlider("nearThreshold", 0, 10000, &nearThreshold, length-xInit, dim);
-    gui1->addSlider("farThreshold", 0, 3000, &farThreshold, length-xInit, dim);
+    gui1->addSlider("farThreshold", 0, 10000, &farThreshold, length-xInit, dim);
     gui1->addSlider("CAM_DISTANCE", 0, 10000, & camDistance, length-xInit, dim);
     gui1->addSlider("MESH_DISTANCE", -10000, 10000, & meshDistance, length-xInit, dim);
     gui1->addSlider("depthScale", 0, 1, &depthScale, length-xInit, dim);
@@ -1058,12 +1131,16 @@ void testApp::keyPressed(int key){
             mode = SLITSCAN;
             sendMode(mode);
             break;
+            
             //        case 'b':
             //            mode = BILLBOARD;
             //            break;
         case 'd':
             mode = DISPLACEMENT;
             sendMode(mode);
+            break;
+        case OF_KEY_RETURN:
+//            bFade = !bFade;
             break;
         case '\t':
             gui1->toggleVisible();

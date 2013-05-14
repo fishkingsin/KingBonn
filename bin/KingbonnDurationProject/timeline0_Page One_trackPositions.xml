@@ -13,63 +13,63 @@
     </element>
     <element name="colors">
         <x>0.000000000</x>
-        <y>397.000000000</y>
+        <y>243.000000000</y>
         <width>1280.000000000</width>
-        <height>40.000000000</height>
+        <height>19.000000000</height>
     </element>
     <element name="curves">
         <x>0.000000000</x>
-        <y>142.000000000</y>
+        <y>337.000000000</y>
         <width>1280.000000000</width>
-        <height>36.000000000</height>
+        <height>21.000000000</height>
     </element>
     <element name="curves_0">
         <x>0.000000000</x>
-        <y>202.000000000</y>
+        <y>382.000000000</y>
         <width>1280.000000000</width>
-        <height>39.000000000</height>
+        <height>26.000000000</height>
     </element>
     <element name="curves_1">
         <x>0.000000000</x>
-        <y>265.000000000</y>
+        <y>142.000000000</y>
         <width>1280.000000000</width>
-        <height>56.000000000</height>
+        <height>27.000000000</height>
     </element>
     <element name="curves_2">
         <x>0.000000000</x>
-        <y>345.000000000</y>
+        <y>432.000000000</y>
         <width>1280.000000000</width>
-        <height>40.000000000</height>
+        <height>23.000000000</height>
     </element>
     <element name="curves_3">
         <x>0.000000000</x>
-        <y>409.000000000</y>
+        <y>193.000000000</y>
         <width>1280.000000000</width>
-        <height>40.000000000</height>
+        <height>26.000000000</height>
     </element>
     <element name="curves_4">
         <x>0.000000000</x>
-        <y>527.000000000</y>
+        <y>479.000000000</y>
         <width>1280.000000000</width>
-        <height>40.000000000</height>
+        <height>25.000000000</height>
     </element>
     <element name="curves_5">
         <x>0.000000000</x>
-        <y>591.000000000</y>
+        <y>528.000000000</y>
         <width>1280.000000000</width>
         <height>40.000000000</height>
     </element>
     <element name="curves_6">
         <x>0.000000000</x>
-        <y>655.000000000</y>
+        <y>592.000000000</y>
         <width>1280.000000000</width>
         <height>40.000000000</height>
     </element>
     <element name="flags">
         <x>0.000000000</x>
-        <y>142.000000000</y>
+        <y>286.000000000</y>
         <width>1280.000000000</width>
-        <height>40.000000000</height>
+        <height>27.000000000</height>
     </element>
     <element name="screen">
         <x>0.000000000</x>
