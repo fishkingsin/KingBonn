@@ -21,7 +21,7 @@
 <Widget>
     <Kind>4</Kind>
     <Name>centerPoint_Z</Name>
-    <Value>2897.727539062</Value>
+    <Value>1647.727539062</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -151,7 +151,7 @@
 <Widget>
     <Kind>17</Kind>
     <Name>dof</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -171,12 +171,12 @@
 <Widget>
     <Kind>2</Kind>
     <Name>OF_LOG_VERBOSE</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>OF_LOG_NOTICE</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>

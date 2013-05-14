@@ -47,7 +47,7 @@ public:
     void sendMode(int i);
     
     ofxPostProcessing post;
-    ofxUICanvas gui;
+
     
 
     ofVec3f orbit;

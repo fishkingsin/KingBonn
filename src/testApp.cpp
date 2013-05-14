@@ -656,7 +656,8 @@ void testApp::draw(){
     {
         glEnable(GL_CULL_FACE);
         glPushMatrix();
-        glScaled(50, 50, 50);
+        glRotatef(180, 0, 0, 1);
+        glScalef(50, 50, 50);
 
         skybox.draw();
         glPopMatrix();
