@@ -74,5 +74,5 @@ void main(void) {
 //  
     vec4 c = gradient(displace);    
 
-    gl_FragColor = oriColor*c;
+    gl_FragColor = c;
 }

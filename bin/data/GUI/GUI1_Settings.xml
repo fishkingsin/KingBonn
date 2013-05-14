@@ -1,27 +1,27 @@
 <Widget>
     <Kind>2</Kind>
     <Name>ENABLE_OSC</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>KINECT_ANGLE</Name>
-    <Value>4.261363983</Value>
+    <Value>0.340908051</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>centerPoint_X</Name>
-    <Value>0.000000000</Value>
+    <Value>-56.819335938</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>centerPoint_Y</Name>
-    <Value>-5.083984375</Value>
+    <Value>0.000000000</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>centerPoint_Z</Name>
-    <Value>625.000000000</Value>
+    <Value>1363.636718750</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -31,7 +31,7 @@
 <Widget>
     <Kind>4</Kind>
     <Name>farThreshold</Name>
-    <Value>1525.568237305</Value>
+    <Value>1670.454589844</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -41,27 +41,32 @@
 <Widget>
     <Kind>4</Kind>
     <Name>MESH_DISTANCE</Name>
-    <Value>-681.818359375</Value>
+    <Value>-1079.545898438</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>depthScale</Name>
-    <Value>0.899193525</Value>
+    <Value>0.963068187</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
     <Name>BILLBOARD_NORM</Name>
-    <Value>14.772727966</Value>
+    <Value>17.613639832</Value>
+</Widget>
+<Widget>
+    <Kind>4</Kind>
+    <Name>maxHeight</Name>
+    <Value>34.659088135</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>POINT</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>DISPLACEMENT</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -72,11 +77,6 @@
     <Kind>2</Kind>
     <Name>SLITSCAN</Name>
     <Value>0</Value>
-</Widget>
-<Widget>
-    <Kind>4</Kind>
-    <Name>maxHeight</Name>
-    <Value>0.000000000</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -101,7 +101,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>2: right-left</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -111,7 +111,7 @@
 <Widget>
     <Kind>2</Kind>
     <Name>4: bottom-top</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
@@ -146,7 +146,7 @@
 <Widget>
     <Kind>17</Kind>
     <Name>bloom</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>17</Kind>
@@ -156,7 +156,7 @@
 <Widget>
     <Kind>4</Kind>
     <Name>DOF_FOCUS</Name>
-    <Value>0.960000038</Value>
+    <Value>0.988636494</Value>
 </Widget>
 <Widget>
     <Kind>4</Kind>
@@ -171,12 +171,12 @@
 <Widget>
     <Kind>2</Kind>
     <Name>OF_LOG_VERBOSE</Name>
-    <Value>1</Value>
+    <Value>0</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>
     <Name>OF_LOG_NOTICE</Name>
-    <Value>0</Value>
+    <Value>1</Value>
 </Widget>
 <Widget>
     <Kind>2</Kind>

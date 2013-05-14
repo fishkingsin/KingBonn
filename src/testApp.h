@@ -43,6 +43,8 @@ public:
 
     ofxOscReceiver receiver;
     ofxOscSender sender;
+    void sendMode(int i);
+    
     ofxPostProcessing post;
     ofxUICanvas gui;
     
@@ -53,7 +55,6 @@ public:
         POINT,
         SLITSCAN,
         TRIANGLE,
-
         DISPLACEMENT,
     };
     MODE mode;
@@ -66,6 +67,7 @@ public:
     ofShader billboardShader;
     ofShader displacement;
     ofImage colormap, bumpmap;
+//    ofFbo fbo;
     ofImage texture;
     ofDirectory dir;
     int numEntry;
@@ -88,7 +90,7 @@ public:
 	ofFloatColor color[NUM_STRIP*LENGTH];
     int total;
     int count;
-    ofVec3f attraction;
+//    ofVec3f attraction;
     ofVec3f centerPoint;
     ofxDelaunay triangulation;
     ofxDuration duration;

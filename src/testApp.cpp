@@ -114,7 +114,8 @@ void testApp::setup(){
     // load the bilboard shader
 	// this is used to change the
 	// size of the particle
-    displacement.load("simplicity");
+    displacement.load("displace");
+    //    displacement.load("displace");
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -135,7 +136,11 @@ void testApp::setup(){
     inputWidth = kinect.getWidth();
     inputHeight = kinect.getHeight();
     receiver.setup(7170);
-    sender.setup("",7171);
+    ofxXmlSettings xml;
+    xml.loadFile("config.xml");
+    
+    string host = xml.getValue("HOST", "127.0.0.1");
+    sender.setup( host,7171);
     // Setup post-processing chain
     post.init(ofGetWidth(), ofGetHeight());
     post.createPass<FxaaPass>()->setEnabled(false);
@@ -238,6 +243,31 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
     else if (args.track->name == "/RGB_ALPHA") {
         rgbAlpha = args.track->value;
     }
+    else if (args.track->name == "/mode")
+    {
+        string flag = args.track->flag;
+        if(flag =="POINT")
+        {
+            mode = POINT;
+            sendMode(mode);
+            
+        }if(flag == "DISPLACEMENT")
+        {
+            mode = DISPLACEMENT;
+            sendMode(mode);
+            
+        }else if(flag == "TRIANGLE")
+        {
+            mode = TRIANGLE;
+            sendMode(mode);
+        }else if(flag == "SLITSCAN")
+        {
+            mode = SLITSCAN;
+            sendMode(mode);
+        }
+
+    }
+    
 }
 
 //--------------------------------------------------------------
@@ -254,7 +284,7 @@ void testApp::update(){
                          ofSignedNoise(pos[j].x/div, pos[j].y/div,t));
             _vec *=  ofGetLastFrameTime()*50;
             vec[j]+=_vec;
-            acc[j] = (attraction-acc[j])*0.1;
+            //            acc[j] = (attraction-acc[j])*0.1;
             vec[j]+=acc[j];
             vec[j]*=0.9;
             ofVec3f Off;
@@ -416,6 +446,8 @@ void testApp::update(){
                 mesh.clear();
                 mesh.setMode(OF_PRIMITIVE_TRIANGLES);
                 float maxZ = 9999;
+                float stepx = 1.0f/width;
+                float stepy = 1.0f/height;
                 for(int y = 0; y < height - 1; y++) { // don't go to the end
                     for(int x = 0; x < width - 1; x++) { // don't go to the end
                         
@@ -440,30 +472,30 @@ void testApp::update(){
                             ofVec3f nev = ConvertProjectiveToRealWorld(x + 1, y + 0, nez);
                             ofVec3f sev = ConvertProjectiveToRealWorld(x + 1, y + 1, sez);
                             ofVec3f swv = ConvertProjectiveToRealWorld(x + 0, y + 1, swz);
-                            if(maxZ<nwz)attraction =  nwv;
+                            //                            if(maxZ<nwz)attraction =  nwv;
                             // compute normal for the upper left
                             ofVec3f normal = getNormal(nwv, nev, swv);
                             
                             // add the upper left triangle
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x,y));
+                            mesh.addTexCoord(ofVec2f(x*stepx,y*stepy));
                             mesh.addVertex(nwv);
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x+1,y));
+                            mesh.addTexCoord(ofVec2f((x+1)*stepx,y*stepy));
                             mesh.addVertex(nev);
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x,y+1));
+                            mesh.addTexCoord(ofVec2f(x*stepx,(y+1)*stepy));
                             mesh.addVertex(swv);
                             
                             // add the bottom right triangle
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x+1,y));
+                            mesh.addTexCoord(ofVec2f((x+1)*stepx,y*stepy));
                             mesh.addVertex(nev);
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x+1,y+1));
+                            mesh.addTexCoord(ofVec2f((x+1)*stepx,(y+1)*stepy));
                             mesh.addVertex(sev);
                             mesh.addNormal(normal);
-                            mesh.addTexCoord(ofVec2f(x,y+1));
+                            mesh.addTexCoord(ofVec2f(x*stepx,(y+1)*stepy));
                             mesh.addVertex(swv);
                         }
                     }
@@ -483,7 +515,7 @@ void testApp::update(){
                         {
                             
                             ofVec3f cur = kinect.getWorldCoordinateAt(x, y);
-                            if(maxZ<cur.z)attraction = cur;
+                            //                            if(maxZ<cur.z)attraction = cur;
                             
                             triangulation.addPoint(kinect.getWorldCoordinateAt(x, y));
                             
@@ -500,14 +532,14 @@ void testApp::update(){
                 mesh.setMode(OF_PRIMITIVE_POINTS);
                 int w = kinect.getWidth();
                 int h = kinect.getHeight();
-                int step = 2;
+                int step = 4;
                 float maxZ = 9999;
                 for(int y = 0; y < h; y += step) {
                     for(int x = 0; x < w; x += step) {
                         if(kinect.getDistanceAt(x, y) > nearThreshold && kinect.getDistanceAt(x, y) < farThreshold)
                         {
                             ofVec3f cur = kinect.getWorldCoordinateAt(x, y);
-                            if(maxZ<cur.z)attraction =  cur;
+                            //                            if(maxZ<cur.z)attraction =  cur;
                             mesh.addColor(kinect.getColorAt(x,y));
                             mesh.addVertex(cur);
                             
@@ -750,17 +782,21 @@ void testApp::drawPointCloud() {
         }
         else if (mode == DISPLACEMENT)
         {
-            
+            ofPushMatrix();
+//            ofScale(0,0,-1);
+//            ofRotateY(-180);
+
             displacement.begin();
             displacement.setUniformTexture("colormap", colormap, 1);
             displacement.setUniformTexture("bumpmap", bumpmap, 2);
             displacement.setUniform1i("maxHeight",maxHeight);
-            displacement.setUniform1f("iGlobalTimeX",ofGetElapsedTimef());
-            displacement.setUniform1f("iGlobalTimeY",ofSignedNoise(ofGetElapsedTimef()));
+            displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()*0.1));
+            displacement.setUniform1f("iGlobalTimeY",ofGetElapsedTimef()*0.9);
             //            kinect.getTextureReference().bind();
             mesh.draw();
             //            kinect.getTextureReference().unbind();
             displacement.end();
+            ofPopMatrix();
             
             
         }
@@ -833,12 +869,13 @@ void testApp::setGUI1()
     gui1->addSlider("depthScale", 0, 1, &depthScale, length-xInit, dim);
     gui1->addSlider("BILLBOARD_NORM",-100, 100, &bbNormal, length-xInit, dim);
     //    gui1->addToggle("DRAW_CANOM", &canonDraw);
+    gui1->addSlider("maxHeight", -100,100, &maxHeight, length-xInit, dim);
     renderMode.push_back("POINT");
     renderMode.push_back("DISPLACEMENT");
     renderMode.push_back("TRIANGLE");
     renderMode.push_back("SLITSCAN");
     gui1->addRadio("RENDER_MODE", renderMode);
-    gui1->addSlider("maxHeight", -100,100, &maxHeight);
+    
     gui1->addLabel("SLITSCAN",OFX_UI_FONT_MEDIUM);
     //    gui1->addToggle("SLITSCAN",&doSlitScan);
     //    gui1->addToggle("USE_KINECT",&usingKinect);   // using kinect or webcam
@@ -869,7 +906,7 @@ void testApp::setGUI1()
                                 OFX_UI_ALIGN_RIGHT,
                                 false);
 	}
-    gui1->addWidgetPosition(new ofxUISlider("DOF_FOCUS", -2.0,2.0,0.0, length-xInit,dim),
+    gui1->addWidgetPosition(new ofxUISlider("DOF_FOCUS", -3.000000,3.0000000,0.0, length-xInit,dim),
                             OFX_UI_WIDGET_POSITION_DOWN,
                             OFX_UI_ALIGN_RIGHT,
                             false);
@@ -942,17 +979,21 @@ void testApp::guiEvent(ofxUIEventArgs &e)
         if(name =="POINT")
         {
             mode = POINT;
+            sendMode(mode);
             
         }if(name == "DISPLACEMENT")
         {
             mode = DISPLACEMENT;
+            sendMode(mode);
             
         }else if(name == "TRIANGLE")
         {
             mode = TRIANGLE;
+            sendMode(mode);
         }else if(name == "SLITSCAN")
         {
             mode = SLITSCAN;
+            sendMode(mode);
         }
     }
     else{
@@ -987,22 +1028,29 @@ void testApp::keyPressed(int key){
             
             
             ofDisableArbTex();
-            
+
             texture.loadImage(dir.getPath(int(ofRandom(numEntry))));
             ofEnableArbTex();
             
             break;
         case 'p':
             mode = POINT;
+            sendMode(mode);
             break;
-            //        case 't':
-            //            mode = TRIANGLE;
-            //            break;
+        case 't':
+            mode = TRIANGLE;
+            sendMode(mode);
+            break;
+        case 's':
+            mode = SLITSCAN;
+            sendMode(mode);
+            break;
             //        case 'b':
             //            mode = BILLBOARD;
             //            break;
         case 'd':
             mode = DISPLACEMENT;
+            sendMode(mode);
             break;
         case '\t':
             gui1->toggleVisible();
@@ -1063,5 +1111,14 @@ void testApp::gotMessage(ofMessage msg){
 
 //--------------------------------------------------------------
 void testApp::dragEvent(ofDragInfo dragInfo){
+    
+}
+void testApp::sendMode(int i)
+{
+    ofxOscMessage m;
+    // check for mouse moved message
+    m.setAddress("/mode");
+    m.addIntArg(i);
+    sender.sendMessage(m);
     
 }
