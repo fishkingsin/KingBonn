@@ -247,6 +247,9 @@ void testApp::setup(){
 	duration.setupFont("GUI/NewMedia Fett.ttf", 12);
 	ofAddListener(duration.events.trackUpdated, this, &testApp::trackUpdated);
 }
+void testApp::userEvent(ofxOpenNIUserEvent & event){
+    ofLogNotice() << getUserStatusAsString(event.userStatus) << "for user" << event.id << "from device" << event.deviceID;
+}
 //--------------------------------------------------------------
 
 void testApp::trackUpdated(ofxDurationEventArgs& args){
@@ -354,6 +357,8 @@ void testApp::update(){
         
     }
 #ifdef USE_OPENNI
+    openNIDevice.update();
+    
 #else
     
     if(kinect.isConnected())
@@ -715,6 +720,7 @@ void testApp::draw(){
         ofRotateY(orbit.y);
         ofRotateZ(orbit.z);
 #ifdef USE_OPENNI
+        openNIDevice.drawImage(-320,-240 , 640,480);
 #else
         kinect.draw(-320,-240 , 640,480);
 #endif
