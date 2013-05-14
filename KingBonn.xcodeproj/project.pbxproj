@@ -34,6 +34,8 @@
 		933a2227713c720ceff80fd967d0a8ee /* tinyxml.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2b40eda85beb63e46785bc299a638898 /* tinyxml.cpp */; };
 		9d44dc88ef9e7991b4a09951e2e4769f /* tinyxmlerror.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 832bdc407620cdba568b713d2252c43c /* tinyxmlerror.cpp */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
+		E3B76AEE1741E309007D6863 /* ofxCubeMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3B76AE51741E309007D6863 /* ofxCubeMap.cpp */; };
+		E3B76AEF1741E309007D6863 /* ofxSkyBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3B76AE71741E309007D6863 /* ofxSkyBox.cpp */; };
 		E3F2F99C173ECCAF0088FD70 /* ofxDuration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3F2F996173ECCAF0088FD70 /* ofxDuration.cpp */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
@@ -176,6 +178,10 @@
 		9bf3aa0d4faa89d0f8a0e545403162be /* OscReceivedElements.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 30; name = OscReceivedElements.cpp; path = ../../../addons/ofxOsc/libs/oscpack/src/osc/OscReceivedElements.cpp; sourceTree = SOURCE_ROOT; };
 		9f7986dc4eb05e75fce2c777500fdc01 /* ofxOscSender.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxOscSender.h; path = ../../../addons/ofxOsc/src/ofxOscSender.h; sourceTree = SOURCE_ROOT; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
+		E3B76AE51741E309007D6863 /* ofxCubeMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxCubeMap.cpp; sourceTree = "<group>"; };
+		E3B76AE61741E309007D6863 /* ofxCubeMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxCubeMap.h; sourceTree = "<group>"; };
+		E3B76AE71741E309007D6863 /* ofxSkyBox.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxSkyBox.cpp; sourceTree = "<group>"; };
+		E3B76AE81741E309007D6863 /* ofxSkyBox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxSkyBox.h; sourceTree = "<group>"; };
 		E3C8CA051739E903008A3AD7 /* MSASpaceTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MSASpaceTime.h; sourceTree = "<group>"; };
 		E3F2F996173ECCAF0088FD70 /* ofxDuration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxDuration.cpp; sourceTree = "<group>"; };
 		E3F2F997173ECCAF0088FD70 /* ofxDuration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxDuration.h; sourceTree = "<group>"; };
@@ -430,6 +436,7 @@
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				E3B76AC71741E309007D6863 /* ofxSkyBox */,
 				E3F2F9A0173ECE5A0088FD70 /* ofxRange */,
 				E3F2F97C173ECCAF0088FD70 /* ofxDuration */,
 				e6053ab7fec63d5f83825b880ce53c41 /* ofxOsc */,
@@ -470,6 +477,26 @@
 				BBAB23BE13894E4700AA2426 /* GLUT.framework */,
 			);
 			name = "3rd party frameworks";
+			sourceTree = "<group>";
+		};
+		E3B76AC71741E309007D6863 /* ofxSkyBox */ = {
+			isa = PBXGroup;
+			children = (
+				E3B76AE41741E309007D6863 /* src */,
+			);
+			name = ofxSkyBox;
+			path = ../../../addons/ofxSkyBox;
+			sourceTree = "<group>";
+		};
+		E3B76AE41741E309007D6863 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				E3B76AE51741E309007D6863 /* ofxCubeMap.cpp */,
+				E3B76AE61741E309007D6863 /* ofxCubeMap.h */,
+				E3B76AE71741E309007D6863 /* ofxSkyBox.cpp */,
+				E3B76AE81741E309007D6863 /* ofxSkyBox.h */,
+			);
+			path = src;
 			sourceTree = "<group>";
 		};
 		E3F2F97C173ECCAF0088FD70 /* ofxDuration */ = {
@@ -884,6 +911,8 @@
 				be5ed1fdb18d5092cf3aaca09495e626 /* PostProcessing.cpp in Sources */,
 				1e615236d6d182ded6c8a8b2aea75a6b /* RenderPass.cpp in Sources */,
 				E3F2F99C173ECCAF0088FD70 /* ofxDuration.cpp in Sources */,
+				E3B76AEE1741E309007D6863 /* ofxCubeMap.cpp in Sources */,
+				E3B76AEF1741E309007D6863 /* ofxSkyBox.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

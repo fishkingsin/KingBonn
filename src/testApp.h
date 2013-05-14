@@ -14,6 +14,7 @@
 #define NUM_STRIP 200
 #define LOC_LENGTH 10
 #define LENGTH LOC_LENGTH*2
+#include "ofxSkyBox.h"
 
 
 class testApp : public ofBaseApp{
@@ -102,4 +103,7 @@ public:
 
     ofVec2f rgbPos;
     shared_ptr<DofPass> Ptr;
+    
+    //skybox;
+    ofxSkyBox        skybox;
 };

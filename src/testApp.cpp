@@ -109,6 +109,7 @@ ofVec3f getNormal(ofVec3f& a, ofVec3f& b, ofVec3f& c) {
 }
 //--------------------------------------------------------------
 void testApp::setup(){
+    skybox.load();
     
     ofSetLogLevel(OF_LOG_VERBOSE);
     // load the bilboard shader
@@ -166,7 +167,13 @@ void testApp::setup(){
     ofDisableArbTex();
     colormap.loadImage("color.png");
     bumpmap.loadImage("bump.png");
+    dir.allowExt("png");
+	numEntry = dir.listDir("images/");
+    
+	// we need to disable ARB textures in order to use normalized texcoords
+	texture.loadImage(dir.getPath(0));
     ofEnableArbTex();
+    
     quadric = gluNewQuadric();
     gluQuadricTexture(quadric, GL_TRUE);
     gluQuadricNormals(quadric, GLU_SMOOTH);
@@ -181,13 +188,6 @@ void testApp::setup(){
     //	shader.setUniformTexture("tex", fbo.getTextureReference(), 1);
 	displacement.end();
 	billboardShader.load("Billboard");
-    dir.allowExt("png");
-	numEntry = dir.listDir("images/");
-    
-	// we need to disable ARB textures in order to use normalized texcoords
-	ofDisableArbTex();
-	texture.loadImage(dir.getPath(0));
-    ofEnableArbTex();
 	ofEnableAlphaBlending();
     
     for (int j=0; j<NUM_STRIP; j++)
@@ -265,7 +265,7 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
             mode = SLITSCAN;
             sendMode(mode);
         }
-
+        
     }
     
 }
@@ -643,26 +643,36 @@ void testApp::update(){
 //--------------------------------------------------------------
 void testApp::draw(){
     
-    ofBackground(0);
-    
-    
+    ofBackground(255);
+
+
     glPushAttrib(GL_ENABLE_BIT);
-    
+
     // setup gl state
     glEnable(GL_DEPTH_TEST);
-    
+
     post.begin(cam);
-    
+    //draw skybox
+    {
+        glEnable(GL_CULL_FACE);
+        glPushMatrix();
+        glScaled(50, 50, 50);
+
+        skybox.draw();
+        glPopMatrix();
+        glDisable(GL_CULL_FACE);
+    }
+
     if(kinect.isConnected())
     {
         drawPointCloud();
     }
-    
+
     post.end();
-    
+
     glPopAttrib();
-    
-    
+
+
     glDisable(GL_DEPTH_TEST);
     ofPushStyle();
     ofSetColor(0,0,0,rgbAlpha);
@@ -672,14 +682,14 @@ void testApp::draw(){
     {
         ofPushStyle();
         ofSetColor(255, 255, 255,rgbAlpha);
-        
+
         ofPushMatrix();
         // the projected points are 'upside down' and 'backwards'
         ofTranslate(rgbPos.x,rgbPos.y);
         ofRotateX(orbit.x);
         ofRotateY(orbit.y);
         ofRotateZ(orbit.z);
-        
+
         kinect.draw(-320,-240 , 640,480);
         ofPopMatrix();
         ofPopStyle();
@@ -687,32 +697,32 @@ void testApp::draw(){
     vbo.bind();
 	vbo.updateVertexData(strip, total);
 	vbo.updateColorData(color, total);
-    
-    
+
+
     for (int j=0; j<NUM_STRIP; j++)
-        
+
     {
         int index = j * LENGTH;
-        
+
         vbo.draw(GL_TRIANGLE_STRIP, index,LENGTH);
-        
+
     }
-    
-    
+
+
 	vbo.unbind();
     if(ofGetLogLevel()==OF_LOG_VERBOSE)
     {
-        
+
         glEnable(GL_DEPTH_TEST);
-        
+
         displacement.begin();
         ofPushMatrix();
         displacement.setUniformTexture("colormap", colormap, 1);
         displacement.setUniformTexture("bumpmap", bumpmap, 2);
-        displacement.setUniform1i("maxHeight",ofGetMouseX());
+        displacement.setUniform1i("maxHeight",maxHeight);
         displacement.setUniform1f("iGlobalTime",ofGetElapsedTimef());
         displacement.setUniform3f("iResolution",ofGetWidth(),ofGetHeight(),0);
-        
+
         displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()));
         displacement.setUniform1f("iGlobalTimeY",ofSignedNoise(ofGetElapsedTimef()));
         ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
@@ -721,8 +731,8 @@ void testApp::draw(){
         gluSphere(quadric, 150, 400, 400);
         ofPopMatrix();
         displacement.end();
-        
-        
+
+
         glDisable(GL_DEPTH_TEST);
         if(kinect.isConnected())
         {
@@ -755,51 +765,50 @@ void testApp::drawPointCloud() {
         triangulation.triangleMesh.drawVertices();
         
     }
-    else
-        if(mode==POINT )
-        {
-            billboardShader.begin();
-            ofEnableAlphaBlending();
-            ofEnableBlendMode(OF_BLENDMODE_ADD);
-            ofEnablePointSprites();
-            texture.getTextureReference().bind();
-            mesh.draw();
-            
-            texture.getTextureReference().unbind();
-            ofDisablePointSprites();
-            
-            billboardShader.end();
-            
-        }
-        else if (mode == SLITSCAN)
-        {
-            glPointSize(5);
-            
-            scanMesh.drawVertices();
-            
-            
-            
-        }
-        else if (mode == DISPLACEMENT)
-        {
-            ofPushMatrix();
-//            ofScale(0,0,-1);
-//            ofRotateY(-180);
-
-            displacement.begin();
-            displacement.setUniformTexture("colormap", colormap, 1);
-            displacement.setUniformTexture("bumpmap", bumpmap, 2);
-            displacement.setUniform1i("maxHeight",maxHeight);
-            displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()*0.1));
-            displacement.setUniform1f("iGlobalTimeY",ofGetElapsedTimef()*0.9);
-            //            kinect.getTextureReference().bind();
-            mesh.draw();
-            //            kinect.getTextureReference().unbind();
-            displacement.end();
-            ofPopMatrix();
-            
-            
-        }
+    else if(mode==POINT )
+    {
+        billboardShader.begin();
+        ofEnableAlphaBlending();
+        ofEnableBlendMode(OF_BLENDMODE_ADD);
+        ofEnablePointSprites();
+        texture.getTextureReference().bind();
+        mesh.draw();
+        
+        texture.getTextureReference().unbind();
+        ofDisablePointSprites();
+        
+        billboardShader.end();
+        
+    }
+    else if (mode == SLITSCAN)
+    {
+        glPointSize(5);
+        
+        scanMesh.drawVertices();
+        
+        
+        
+    }
+    else if (mode == DISPLACEMENT)
+    {
+        ofPushMatrix();
+        //            ofScale(0,0,-1);
+        //            ofRotateY(-180);
+        
+        displacement.begin();
+        displacement.setUniformTexture("colormap", colormap, 1);
+        displacement.setUniformTexture("bumpmap", bumpmap, 2);
+        displacement.setUniform1i("maxHeight",maxHeight);
+        displacement.setUniform1f("iGlobalTimeX",ofSignedNoise(ofGetElapsedTimef()*0.1));
+        displacement.setUniform1f("iGlobalTimeY",ofGetElapsedTimef()*0.9);
+        //            kinect.getTextureReference().bind();
+        mesh.draw();
+        //            kinect.getTextureReference().unbind();
+        displacement.end();
+        ofPopMatrix();
+        
+        
+    }
     
     ofPopMatrix();
     
@@ -882,6 +891,7 @@ void testApp::setGUI1()
     gui1->addToggle("PAUSE", &doPause);
     
     gui1->addSlider("KINECT_ALPHA",0,255,&rgbAlpha, length-xInit, dim);
+    
     gradientModeRadioOption.push_back("0: most recent");
     gradientModeRadioOption.push_back("1: left-right");
     gradientModeRadioOption.push_back("2: right-left");
@@ -935,7 +945,9 @@ void testApp::setGUI1()
     
     
 	ofAddListener(gui1->newGUIEvent,this,&testApp::guiEvent);
+    gui1->setDrawPadding(false);
     gui1->setVisible(false);
+    
     gui1->loadSettings("GUI/GUI1_Settings.xml");
 }
 void testApp::guiEvent(ofxUIEventArgs &e)
@@ -1028,7 +1040,7 @@ void testApp::keyPressed(int key){
             
             
             ofDisableArbTex();
-
+            
             texture.loadImage(dir.getPath(int(ofRandom(numEntry))));
             ofEnableArbTex();
             
