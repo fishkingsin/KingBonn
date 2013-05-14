@@ -117,6 +117,23 @@ void testApp::setup(){
 	// size of the particle
     displacement.load("displace");
     //    displacement.load("displace");
+#ifdef USE_OPENNI
+    openNIDevice.setup();
+    openNIDevice.addImageGenerator();
+    openNIDevice.addDepthGenerator();
+    openNIDevice.setRegister(true);
+    openNIDevice.setMirror(true);
+    openNIDevice.addUserGenerator();
+    openNIDevice.setMaxNumUsers(2);
+    openNIDevice.start();
+    
+    // set properties for all user masks and point clouds
+    //openNIDevice.setUseMaskPixelsAllUsers(true); // if you just want pixels, use this set to true
+    openNIDevice.setUseMaskTextureAllUsers(true); // this turns on mask pixels internally AND creates mask textures efficiently
+    openNIDevice.setUsePointCloudsAllUsers(true);
+    openNIDevice.setPointCloudDrawSizeAllUsers(2); // size of each 'point' in the point cloud
+    openNIDevice.setPointCloudResolutionAllUsers(2); // resolution of the mesh created for the point cloud eg., this will use every second depth pixel
+#else
     kinect.setRegistration(true);
     
 	kinect.init();
@@ -126,16 +143,18 @@ void testApp::setup(){
 	kinect.open();		// opens first available kinect
 	//kinect.open(1);	// open a kinect by id, starting with 0 (sorted by serial # lexicographically))
 	//kinect.open("A00362A08602047A");	// open a kinect using it's unique serial #
-    
+    angle = 0;
+	kinect.setCameraTiltAngle(angle);
+    inputWidth = kinect.getWidth();
+    inputHeight = kinect.getHeight();
+
+#endif
 	
 	
 	ofSetFrameRate(60);
 	
 	// zero the tilt on startup
-	angle = 0;
-	kinect.setCameraTiltAngle(angle);
-    inputWidth = kinect.getWidth();
-    inputHeight = kinect.getHeight();
+
     receiver.setup(7170);
     ofxXmlSettings xml;
     xml.loadFile("config.xml");
@@ -334,6 +353,9 @@ void testApp::update(){
         
         
     }
+#ifdef USE_OPENNI
+#else
+    
     if(kinect.isConnected())
     {
         kinect.update();
@@ -551,6 +573,7 @@ void testApp::update(){
             }
         }
     }
+#endif
     if(bOsc)
     {
         // check for waiting messages
@@ -663,12 +686,13 @@ void testApp::draw(){
         glPopMatrix();
         glDisable(GL_CULL_FACE);
     }
-
+#ifdef USE_OPENNI
+#else
     if(kinect.isConnected())
     {
         drawPointCloud();
     }
-
+#endif
     post.end();
 
     glPopAttrib();
@@ -690,8 +714,10 @@ void testApp::draw(){
         ofRotateX(orbit.x);
         ofRotateY(orbit.y);
         ofRotateZ(orbit.z);
-
+#ifdef USE_OPENNI
+#else
         kinect.draw(-320,-240 , 640,480);
+#endif
         ofPopMatrix();
         ofPopStyle();
     }
@@ -735,11 +761,15 @@ void testApp::draw(){
 
 
         glDisable(GL_DEPTH_TEST);
+#ifdef USE_OPENNI
+#else
         if(kinect.isConnected())
         {
             kinect.drawDepth(0, 0, 320,240);
             kinect.draw(320, 0, 320, 240);
         }
+
+#endif
         duration.draw(0,0, ofGetWidth(), ofGetHeight());
     }
 }
@@ -853,8 +883,12 @@ void testApp::exit() {
     //    canon.endLiveView();
     
     gui1->saveSettings("GUI/GUI1_Settings.xml");
+#ifdef USE_OPENNI
+#else
+
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
+#endif
 }
 void testApp::setGUI1()
 {   float xInit = OFX_UI_GLOBAL_WIDGET_SPACING;
@@ -966,10 +1000,14 @@ void testApp::guiEvent(ofxUIEventArgs &e)
     {
         spaceBoundaryMax    = ofVec3f(400, 400, farThreshold);
     }
+#ifdef USE_OPENNI
+#else
+
     else if(name == "KINECT_ANGLE")
     {
         kinect.setCameraTiltAngle(((ofxUISlider*)e.widget)->getScaledValue());
     }
+#endif
     else if(kind == OFX_UI_WIDGET_TOGGLE)
     {
         for(int  i = 0; i < gradientModeRadioOption.size() ; i++)

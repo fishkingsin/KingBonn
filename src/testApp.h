@@ -1,8 +1,12 @@
 #pragma once
 
 #include "ofMain.h"
-
+#define USE_OPENNI
+#ifdef USE_OPENNI
+#include "ofxOpenNI.h"
+#else
 #include "ofxKinect.h"
+#endif
 #include "ofxOsc.h"
 #include "ofxXmlSettings.h"
 #include "ofxDelaunay.h"
@@ -37,8 +41,12 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
     void fireStrip(float x ,float y, float vx, float vy);
+    #ifdef USE_OPENNI
+    void userEvent(ofxOpenNIUserEvent & event);
+    ofxOpenNI openNIDevice;
+#else
     ofxKinect kinect;
-
+#endif
     float angle;
     ofEasyCam cam;
 

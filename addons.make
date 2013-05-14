@@ -1,6 +1,9 @@
 ofxOsc
 ofxXmlSettings
 ofxDelaunay
-ofxKinect
+ofxDuration
+ofxOpenNI
 ofxPostProcessing
+ofxRange
+ofxSkyBox
 ofxUI
