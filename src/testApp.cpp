@@ -276,7 +276,8 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
     else if (args.track->name == "/PARTICLE_COLOR")
     {
         float c = args.track->color.getHue();
-        ofLogVerbose() << args.track->name << " "<< c;
+        float s = args.track->color.getSaturation();
+        ofLogVerbose() << args.track->name << " "<< s;
         for (int j=0; j<NUM_STRIP; j++)
         {
             float h = ofRandom(c-50,c+50);
@@ -284,7 +285,7 @@ void testApp::trackUpdated(ofxDurationEventArgs& args){
             {
                 int index = i+(j*LENGTH);
                 float brightness = sinf(PI*float((i*0.5)*1.f/LENGTH*0.5f))*255;
-                color[index].set(ofColor::fromHsb(h,255, 255,brightness));
+                color[index].set(ofColor::fromHsb(h,s, 255,brightness));
             }
         }
 
@@ -724,6 +725,7 @@ void testApp::draw(){
     glEnable(GL_DEPTH_TEST);
 
     post.begin(cam);
+//    ofDrawGrid(float scale, float ticks, false, bool x, bool y, bool z);
     //draw skybox
 //    {
 //        glEnable(GL_CULL_FACE);
